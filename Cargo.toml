@@ -4,3 +4,15 @@ version = "0.1.0"
 authors = ["Kia Karimi <kiakarimi82@gmail.com>", "Alireza Kondori <alirezako82@gmail.com>"]
 edition = "2021"
 license = "MIT"
+
+[lib]
+name = "blockchainlib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "blockchain"
+path = "src/main.rs"
+
+[dependencies]
+hex = "0.3.2"
+crypto-hash = "0.3.4"
