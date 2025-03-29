@@ -13,24 +13,24 @@ target
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/decentralized-identity-mvp/node_modules
-/decentralized-identity-mvp/.pnp
-/decentralized-identity-mvp/.pnp.js
+/frontend/node_modules
+/frontend/.pnp
+/frontend/.pnp.js
 
 # testing
-/decentralized-identity-mvp/coverage
+/frontend/coverage
 
 # production
-/decentralized-identity-mvp/build
+/frontend/build
 
 # misc
-/decentralized-identity-mvp/.DS_Store
-/decentralized-identity-mvp/.env.local
-/decentralized-identity-mvp/.env.development.local
-/decentralized-identity-mvp/.env.test.local
-/decentralized-identity-mvp/.env.production.local
+/frontend/.DS_Store
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
 
-/decentralized-identity-mvp/npm-debug.log*
-/decentralized-identity-mvp/yarn-debug.log*
-/decentralized-identity-mvp/yarn-error.log*
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
 

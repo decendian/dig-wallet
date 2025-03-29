@@ -22,6 +22,7 @@ pub fn u64_bytes (u: &u64) -> [u8; 8] {
     ]
 }
 
+/// Converts a `u128` into its byte representation.
 pub fn u128_bytes (u: &u128) -> [u8; 16] {
     [
         (u >> 8 * 0x0) as u8,
