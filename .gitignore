@@ -8,3 +8,29 @@ target
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/decentralized-identity-mvp/node_modules
+/decentralized-identity-mvp/.pnp
+/decentralized-identity-mvp/.pnp.js
+
+# testing
+/decentralized-identity-mvp/coverage
+
+# production
+/decentralized-identity-mvp/build
+
+# misc
+/decentralized-identity-mvp/.DS_Store
+/decentralized-identity-mvp/.env.local
+/decentralized-identity-mvp/.env.development.local
+/decentralized-identity-mvp/.env.test.local
+/decentralized-identity-mvp/.env.production.local
+
+/decentralized-identity-mvp/npm-debug.log*
+/decentralized-identity-mvp/yarn-debug.log*
+/decentralized-identity-mvp/yarn-error.log*
+
