@@ -7,11 +7,11 @@ license = "MIT"
 
 [lib]
 name = "blockchainlib"
-path = "src/lib.rs"
+path = "crates/identity_wallet/src/lib.rs"
 
 [[bin]]
 name = "blockchain"
-path = "src/main.rs"
+path = "crates/identity_wallet/src/main.rs"
 
 [dependencies]
 hex = "0.3.2"
