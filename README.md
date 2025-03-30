@@ -3,6 +3,7 @@ Decentralized Identity Guardian. Part of Web3.0, foundation is built on Hedera B
 
 ### Package structure for this platform
 decentralized-identity-guardian/
+```` bash
 │── Cargo.toml                # Rust workspace configuration
 │── Cargo.lock
 │── README.md
@@ -36,3 +37,4 @@ decentralized-identity-guardian/
 └── deployment/                 # Deployment scripts (Docker, Kubernetes, CI/CD)
     ├── docker/
     ├── terraform/
+````bash
