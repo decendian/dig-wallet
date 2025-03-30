@@ -2,8 +2,9 @@
 Decentralized Identity Guardian. Part of Web3.0, foundation is built on Hedera Blockchain. A platform for secure decentralized digital identity. It provides secure storage, key management, verifiable credentials, and access control policies. 
 
 ### Package structure for this platform
+
+``` 
 decentralized-identity-guardian/
-```` bash
 │── Cargo.toml                # Rust workspace configuration
 │── Cargo.lock
 │── README.md
@@ -37,4 +38,4 @@ decentralized-identity-guardian/
 └── deployment/                 # Deployment scripts (Docker, Kubernetes, CI/CD)
     ├── docker/
     ├── terraform/
-````bash
+```
