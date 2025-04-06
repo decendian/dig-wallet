@@ -1,11 +1,12 @@
-// Simply re-export everything from the modules
-pub use self::format::*;
-pub use self::verifier::*;
+// This is the main entry point for the crate
+pub mod format;
+pub mod verifier;
 
-use crate::format::VerifiableCredential;
 use serde::{Deserialize, Serialize};
+use crate::format::VerifiableCredential;
 
-#[derive(Serialize, Deserialize)]
+// Re-export important types and functions
+#[derive(Serialize, Deserialize, Clone)]
 pub struct CredentialRequest {
     pub subject: CredentialSubject,
     pub type_: Vec<String>,
@@ -13,13 +14,14 @@ pub struct CredentialRequest {
     pub expiration_date: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct CredentialSubject {
     pub id: Option<String>,
     pub name: String,
     pub attributes: serde_json::Value,
 }
 
+// Public function to issue credentials
 pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredential, String> {
     // Create a new credential based on the request
     let mut credential = format::create_credential(
@@ -29,7 +31,7 @@ pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredenti
         request.expiration_date,
     );
     
-    // Sign the credential (this would use your DID signing logic)
+    // Sign the credential
     match format::sign_credential(&mut credential) {
         Ok(_) => Ok(credential),
         Err(e) => Err(format!("Failed to sign credential: {}", e)),

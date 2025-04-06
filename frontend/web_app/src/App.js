@@ -19,14 +19,52 @@ function App() {
   };
 
   /**
-   * issueCredential simulates the issuance of a Verifiable Credential.
-   * TODO: Replace stub with a backend API call to issue a credential.
+   * Issues a Verifiable Credential by calling the backend API
    */
-  const issueCredential = () => {
-    // Dummy VC - in production, this should be generated and signed by an issuer
-    const dummyVc = "VC: { name: 'John Doe', credential: 'University Degree' }";
-    setVc(dummyVc);
-    console.log("Issued Credential:", dummyVc);
+  const issueCredential = async () => {
+    try {
+      // Add a loading state if you don't have one
+      // setIsLoading(true);
+      
+      // Sample subject data
+      const subjectData = {
+        name: 'John Doe',
+        id: 'did:example:123',
+        degree: {
+          type: 'BachelorDegree',
+          name: 'Bachelor of Science in Computer Science'
+        }
+      };
+      
+      // Make API call to your Rust backend
+      const response = await fetch('http://localhost:8080/api/credentials/issue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subject: subjectData,
+          credential_type: ['UniversityDegreeCredential'],
+          issuer_did: 'did:example:issuer',
+          expiration_date: null
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to issue credential');
+      }
+      
+      const credential = await response.json();
+      setVc(credential);
+      console.log("Issued Credential:", credential);
+      
+    } catch (error) {
+      console.error("Error issuing credential:", error);
+      // setError(error.message);
+    } finally {
+      // setIsLoading(false);
+    }
   };
 
   /**
@@ -57,7 +95,12 @@ function App() {
       <div className="section">
         <h2>2. Issue Verifiable Credential (VC)</h2>
         <button onClick={issueCredential}>Issue Credential</button>
-        {vc && <p>Your VC: {vc}</p>}
+        {vc && (
+          <div>
+            <p>Your VC:</p>
+            <pre>{JSON.stringify(vc, null, 2)}</pre>
+          </div>
+        )}
       </div>
       
       {/* Section 3: Age Verification */}
