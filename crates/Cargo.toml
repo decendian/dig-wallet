@@ -3,3 +3,4 @@ members = [
     "verifiable_credentials",
     "api_server"
 ]
+resolver = "2"

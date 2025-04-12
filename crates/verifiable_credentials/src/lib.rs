@@ -1,6 +1,7 @@
 // This is the main entry point for the crate
 pub mod format;
 pub mod verifier;
+pub mod keys;
 
 use serde::{Deserialize, Serialize};
 use crate::format::VerifiableCredential;

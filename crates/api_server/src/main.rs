@@ -55,6 +55,9 @@ async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
 
+    // No need to initialize keys here since we're using a demo keypair
+    // in the verifiable_credentials crate
+    
     println!("Starting server at http://localhost:8080");
 
     HttpServer::new(|| {

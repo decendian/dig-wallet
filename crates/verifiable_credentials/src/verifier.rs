@@ -1,5 +1,8 @@
 use super::format::VerifiableCredential;
-
+use super::keys;
+use ed25519_dalek::{PublicKey, Verifier};
+use base64::decode;
+use sha2::{Sha256, Digest};
 
 // Needs work: This function should sign the credential using the issuer's private key
 // pub fn sign_credential(credential: &mut VerifiableCredential) -> Result<(), String> {
@@ -16,19 +19,9 @@ use super::format::VerifiableCredential;
 //     Ok(())
 // }
 pub fn verify_credential(credential: &VerifiableCredential) -> Result<bool, String> {
-    // In a real implementation, you would:
-    // 1. Extract the proof from the credential
-    // 2. Remove the proof from the credential
-    // 3. Serialize the credential without the proof
-    // 4. Hash the serialized data
-    // 5. Verify the signature using the issuer's public key
-    
-    // This is a simplified example
+    // Check if the credential has a proof
     if let Some(proof) = &credential.proof {
-        // Verify the proof is valid
-        // In a real implementation, you would verify the signature
-        
-        // Check if the credential has expired
+        // Check expiration date
         if let Some(expiration_date) = &credential.expiration_date {
             let expiration = chrono::DateTime::parse_from_rfc3339(expiration_date)
                 .map_err(|e| format!("Invalid expiration date: {}", e))?;
@@ -39,8 +32,21 @@ pub fn verify_credential(credential: &VerifiableCredential) -> Result<bool, Stri
             }
         }
         
-        // All checks passed
-        Ok(true)
+        // Create a copy without the proof for signature verification
+        let mut credential_for_verification = credential.clone();
+        credential_for_verification.proof = None;
+        
+        // Canonicalize
+        let canonical = serde_json::to_string(&credential_for_verification)
+            .map_err(|e| format!("Serialization error: {}", e))?;
+        
+        // For demo, we use the same keypair for verification
+        // In a real implementation, you'd resolve the DID to get the public key
+        let keypair = keys::get_demo_keypair();
+        let public_key = &keypair.public;
+        
+        // Verify the signature
+        keys::verify_signature(canonical.as_bytes(), &proof.proof_value, public_key)
     } else {
         Err("Credential has no proof".to_string())
     }

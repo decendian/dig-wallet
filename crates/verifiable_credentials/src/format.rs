@@ -2,6 +2,8 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use super::CredentialSubject;  // Use CredentialSubject from the parent module
+use super::keys;
+use serde_json::Value;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct VerifiableCredential {
@@ -55,23 +57,32 @@ pub fn create_credential(
     }
 }
 
-// Needs work: This function should sign the credential using the issuer's private key
+// This function should sign the credential using the issuer's private key
 pub fn sign_credential(credential: &mut VerifiableCredential) -> Result<(), String> {
-    // In a real implementation, you would:
-    // 1. Serialize the credential without the proof
-    // 2. Hash the serialized data
-    // 3. Sign the hash with the issuer's private key
-    // 4. Add the signature to the proof
+    // Step 1: Create a copy without the proof
+    let mut credential_for_signing = credential.clone();
+    credential_for_signing.proof = None;
     
-    // This is a simplified example
+    // Step 2: Canonicalize (deterministic serialization)
+    let canonical = serde_json::to_string(&credential_for_signing)
+        .map_err(|e| format!("Serialization error: {}", e))?;
+    
+    // Step 3: Get the demo keypair (in production, you'd retrieve the right key)
+    let keypair = keys::get_demo_keypair();
+    
+    // Step 4: Sign the canonicalized data
+    let signature = keys::sign_data(canonical.as_bytes(), &keypair);
+    
+    // Step 5: Add the proof
     let created = Utc::now().to_rfc3339();
+    let verification_method = format!("{}#key-1", credential.issuer);
     
     credential.proof = Some(Proof {
         type_: "Ed25519Signature2020".to_string(),
         created,
-        verification_method: format!("{}#key-1", credential.issuer),
+        verification_method,
         proof_purpose: "assertionMethod".to_string(),
-        proof_value: "zBYw5msGyeBRfMRe7JQLVuMh6xxZJFTN9qFhCVWx5Y2JFBrZSL9CCLFUH9EMkEzGbQy7qZheswmuzEB3TrTJbCDy".to_string(),
+        proof_value: signature,
     });
     
     Ok(())
