@@ -1,0 +1,8 @@
+[package]
+name = "verifiable_credentials"
+version = "0.1.0"
+authors = ["Kia Karimi <kiakarimi82@gmail.com>", "Alireza Kondori <alirezako82@gmail.com>"]
+edition = "2021"
+
+[dependencies]
+
