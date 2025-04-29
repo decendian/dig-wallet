@@ -1,9 +1,9 @@
 // Simply re-export everything from the modules
-pub use self::format::*;
-pub use self::verifier::*;
+pub use crate::format::*;
+pub use crate::verifier::*;
 
-use crate::format::VerifiableCredential;
 use serde::{Deserialize, Serialize};
+use crate::CredentialSubject; // Use the `CredentialSubject` from `lib.rs`
 
 #[derive(Serialize, Deserialize)]
 pub struct CredentialRequest {
@@ -13,24 +13,17 @@ pub struct CredentialRequest {
     pub expiration_date: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct CredentialSubject {
-    pub id: Option<String>,
-    pub name: String,
-    pub attributes: serde_json::Value,
-}
-
 pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredential, String> {
     // Create a new credential based on the request
-    let mut credential = format::create_credential(
+    let mut credential = create_credential(
         request.issuer_did,
         request.subject,
         request.type_,
         request.expiration_date,
     );
-    
-    // Sign the credential (this would use your DID signing logic)
-    match format::sign_credential(&mut credential) {
+
+    // Sign the credential
+    match sign_credential(&mut credential) {
         Ok(_) => Ok(credential),
         Err(e) => Err(format!("Failed to sign credential: {}", e)),
     }

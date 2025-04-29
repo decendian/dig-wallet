@@ -2,6 +2,7 @@
 pub mod format;
 pub mod verifier;
 pub mod keys;
+pub mod module;
 
 use serde::{Deserialize, Serialize};
 use crate::format::VerifiableCredential;

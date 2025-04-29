@@ -2,7 +2,6 @@ use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signature, Signer, Verifier};
 use rand::rngs::OsRng;
 use sha2::{Sha256, Digest};
 use base64::{encode, decode};
-use std::fs;
 
 // Simple utility to generate a random keypair for testing
 pub fn generate_random_keypair() -> Keypair {

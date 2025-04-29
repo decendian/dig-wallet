@@ -13,5 +13,4 @@ signature = "2.3.0-pre.6"
 base64 = "0.22.1"
 
 [lib]
-name = "did_library"
 path = "src/lib.rs"

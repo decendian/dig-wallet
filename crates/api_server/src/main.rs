@@ -1,6 +1,6 @@
 use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer, Responder};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use verifiable_credentials::{self, CredentialRequest, CredentialSubject};
 
 #[derive(Deserialize)]

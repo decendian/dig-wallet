@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use super::CredentialSubject;  // Use CredentialSubject from the parent module
 use super::keys;
-use serde_json::Value;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct VerifiableCredential {

@@ -1,8 +1,5 @@
 use super::format::VerifiableCredential;
 use super::keys;
-use ed25519_dalek::{PublicKey, Verifier};
-use base64::decode;
-use sha2::{Sha256, Digest};
 
 // Needs work: This function should sign the credential using the issuer's private key
 // pub fn sign_credential(credential: &mut VerifiableCredential) -> Result<(), String> {
