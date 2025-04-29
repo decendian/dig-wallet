@@ -1,6 +1,5 @@
 // Simply re-export everything from the modules
 pub use crate::format::*;
-pub use crate::verifier::*;
 
 use serde::{Deserialize, Serialize};
 use crate::CredentialSubject; // Use the `CredentialSubject` from `lib.rs`

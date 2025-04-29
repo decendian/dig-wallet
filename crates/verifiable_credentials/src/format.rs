@@ -69,7 +69,7 @@ pub fn sign_credential(credential: &mut VerifiableCredential) -> Result<(), Stri
     // Step 3: Get the demo keypair (in production, you'd retrieve the right key)
     let keypair = keys::get_demo_keypair();
     
-    // Step 4: Sign the canonicalized data
+    // Step 4: Sign the canonicalized data using base64 encoding
     let signature = keys::sign_data(canonical.as_bytes(), &keypair);
     
     // Step 5: Add the proof

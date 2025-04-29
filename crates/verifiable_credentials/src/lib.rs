@@ -1,6 +1,5 @@
 // This is the main entry point for the crate
 pub mod format;
-pub mod verifier;
 pub mod keys;
 pub mod module;
 
