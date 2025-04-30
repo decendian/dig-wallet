@@ -3,7 +3,7 @@ name = "verifiable_credentials"
 version = "0.1.0"
 authors = ["Kia Karimi <kiakarimi82@gmail.com>", "Alireza Kondori <alirezako82@gmail.com>"]
 edition = "2021"
-
+build = "src/build.rs"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }

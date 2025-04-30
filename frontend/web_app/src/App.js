@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ISSUE_CREDENTIAL_URL } from './config/api';
 import "./App.css";
 
 function App() {
@@ -37,7 +38,7 @@ function App() {
       };
       
       // Make API call to your Rust backend
-      const response = await fetch('http://localhost:8080/api/credentials/issue', {
+      const response = await fetch(ISSUE_CREDENTIAL_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

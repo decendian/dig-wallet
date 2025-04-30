@@ -1,7 +1,6 @@
 // This is the main entry point for the crate
 pub mod format;
 pub mod keys;
-pub mod presentation; // Add this line
 
 use serde::{Deserialize, Serialize};
 use crate::format::VerifiableCredential;
@@ -21,14 +20,6 @@ pub struct CredentialSubject {
     pub name: String,
     pub attributes: serde_json::Value,
 }
-
-// Re-export presentation types
-pub use presentation::{
-    PresentationDefinition,
-    PresentationSubmission,
-    VerifiablePresentation,
-    create_presentation_for_definition,
-};
 
 // Public function to issue credentials
 pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredential, String> {

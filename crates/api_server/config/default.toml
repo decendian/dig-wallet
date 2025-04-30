@@ -1,0 +1,7 @@
+# Default server configuration
+
+# Server binding address
+host = "127.0.0.1"
+
+# Server port
+port = 8080
