@@ -3,9 +3,7 @@
 //! This module provides cryptographic key utilities for creating and
 //! manipulating keys used in DIDs.
 
-use ring::{rand, signature};
 use base64::Engine;
-use ring::signature::KeyPair;
 
 /// Supported key types
 pub enum KeyType {

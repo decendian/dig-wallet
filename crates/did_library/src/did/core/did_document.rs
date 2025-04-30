@@ -3,10 +3,8 @@
 //! A DID Document contains information associated with a DID,
 //! including public keys, authentication methods, and services.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
-use super::key_utils::PublicKey;
 
 /// Represents a W3C compliant DID Document
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -17,11 +15,10 @@ pub struct DIDDocument {
     /// Controller DIDs that have authority over this DID
     #[serde(skip_serializing_if = "Option::is_none")]
     pub controller: Option<Vec<String>>,
-
+    
     /// Public keys associated with this DID
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub verification_method: Vec<VerificationMethod>,
-
+    
     /// Authentication methods (references to verification methods)
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub authentication: Vec<Authentication>,
@@ -126,7 +123,7 @@ impl DIDDocument {
 
     /// Add a verification method to the document
     pub fn add_verification_method(&mut self, method: VerificationMethod) {
-        self.verification_method.push(method);
+        self.verification_method.push(method)
     }
 
     /// Add an authentication method
@@ -141,6 +138,7 @@ impl DIDDocument {
 
     /// Serialize to JSON
     pub fn to_json(&self) -> Result<String, serde_json::Error> {
+        // serde_json::to_string_pretty(self)
         serde_json::to_string_pretty(self)
     }
 
