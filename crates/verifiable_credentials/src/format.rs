@@ -4,7 +4,7 @@ use uuid::Uuid;
 use super::CredentialSubject;  // Use CredentialSubject from the parent module
 use super::keys;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct VerifiableCredential {
     #[serde(rename = "@context")]
     pub context: Vec<String>,
@@ -20,7 +20,7 @@ pub struct VerifiableCredential {
     pub proof: Option<Proof>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Proof {
     pub type_: String,
     pub created: String,
