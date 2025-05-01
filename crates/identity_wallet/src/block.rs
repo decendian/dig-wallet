@@ -63,4 +63,5 @@ impl Hashable for Block {
 }
 
 pub fn check_difficulty(hash: &BlockHash, difficulty: u128) -> bool {
+    todo!("Check if the hash meets the difficulty requirement");
 }
