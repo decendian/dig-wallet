@@ -3,6 +3,6 @@ use did_library::did::core::traits::DIDMethod;
 use did_library::did::methods::key::handler::KeyDID;
 
 fn main() {
-    // print!("{:?}", KeyDID.create_did());
+    // print!("{:?}", KeyDID.create_key());
     //***
 }

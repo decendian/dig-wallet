@@ -4,8 +4,12 @@
 //! manipulating keys used in DIDs.
 
 use base64::Engine;
+use serde::{Deserialize, Serialize};
+use ssi::crypto::ed25519::ed25519::signature;
+use ssi::crypto::rand;
 
 /// Supported key types
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum KeyType {
     /// Ed25519 signatures
     Ed25519,
