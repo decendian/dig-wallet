@@ -5,6 +5,13 @@ authors = ["Kia Karimi <kiakarimi82@gmail.com>", "Alireza Kondori <alirezako82@g
 edition = "2021"
 license = "MIT"
 
+[workspace]
+members = [
+    "crates/verifiable_credentials",
+    "crates/api_server",
+    "crates/identity_wallet",
+]
+
 [lib]
 name = "blockchainlib"
 path = "crates/identity_wallet/src/lib.rs"
