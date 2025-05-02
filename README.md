@@ -1,5 +1,28 @@
 # dig-for-security
-Decentralized Identity Guardian. Part of Web3.0, foundation is built on Hedera Blockchain. A platform for secure decentralized digital identity. It provides secure storage, key management, verifiable credentials, and access control policies. 
+🛡️ Decentralized Identity Guardian
+Decentralized Identity Guardian is a secure, modular platform for managing decentralized digital identity. Bridging technologies from both Web3 and Web5, it empowers users with full control over their identifiers, credentials, and data—without relying on centralized systems.
+
+✨ Features
+
+🔐 Decentralized Identifiers (DIDs) – Multi-method DID support (e.g. did:key, did:ion, did:ethr)
+
+📜 Verifiable Credentials (VCs) – Issue, verify, and manage cryptographically verifiable credentials
+
+🔑 Key Management – Secure generation, rotation, and recovery of cryptographic keys
+
+🗄️ Identity Wallet – Store identity data and credentials using decentralized storage (e.g. DWNs, IPFS)
+
+🔒 Access Control – Policy-based access using identity and credential attributes
+
+🌐 Web3 + Web5 Ready
+
+✅ Compatible with on-chain identity (Ethereum, Polygon, etc.)
+
+✅ Integrates with Web5 concepts like Decentralized Web Nodes (DWNs) and self-sovereign identity
+
+✅ Built on open standards: W3C DID, VC, DIDComm
+
+
 
 ### Package structure for this platform
 
