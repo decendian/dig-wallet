@@ -51,6 +51,7 @@ pub struct DIDDocument {
 }
 
 pub struct DIDCreationOptions {
+    pub key_type: Option<KeyType>,
     pub verification_method: Option<Vec<VerificationMethod>>,
     pub authentication: Option<Vec<Authentication>>,
     pub assertion_method: Option<Vec<String>>,
