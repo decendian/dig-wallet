@@ -1,5 +1,6 @@
 # dig-for-security
 🛡️ Decentralized Identity Guardian
+
 Decentralized Identity Guardian is a secure, modular platform for managing decentralized digital identity. Bridging technologies from both Web3 and Web5, it empowers users with full control over their identifiers, credentials, and data—without relying on centralized systems.
 
 ✨ Features
