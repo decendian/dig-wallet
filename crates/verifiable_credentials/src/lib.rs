@@ -22,14 +22,6 @@ pub struct CredentialSubject {
     pub attributes: serde_json::Value,
 }
 
-// Re-export presentation types
-pub use presentation::{
-    PresentationDefinition,
-    PresentationSubmission,
-    VerifiablePresentation,
-    create_presentation_for_definition,
-};
-
 // Public function to issue credentials
 pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredential, String> {
     // Create a new credential based on the request
