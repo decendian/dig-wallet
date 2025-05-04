@@ -6,6 +6,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 export const apiConfig = {
   baseUrl: API_URL,
   endpoints: {
+    createDid: '/did/create',  
     issueCredential: '/credentials/issue',
     // New presentation endpoints
     createPresentation: '/presentations/create',
@@ -21,6 +22,7 @@ export const getApiUrl = (endpoint) => {
 };
 
 // Export specific endpoint URLs
+export const CREATE_DID_URL = getApiUrl(apiConfig.endpoints.createDid);
 export const ISSUE_CREDENTIAL_URL = getApiUrl(apiConfig.endpoints.issueCredential);
 // Export new presentation endpoint URLs
 export const CREATE_PRESENTATION_URL = getApiUrl(apiConfig.endpoints.createPresentation);

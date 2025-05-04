@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 verifiable_credentials = { path = "../verifiable_credentials" }
+did_library = { path = "../did_library" }
 actix-web = "4.3.1"
 actix-cors = "0.6.4"
 serde = { version = "1.0", features = ["derive"] }

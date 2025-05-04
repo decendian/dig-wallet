@@ -31,17 +31,16 @@ pub fn sign_data(data: &[u8], keypair: &Keypair) -> String {
     let mut hasher = Sha256::new();
     hasher.update(data);
     let hash = hasher.finalize();
-    
+
     // Sign the hash
     // Sign the given message and return a digital signature
     // msg: &[u8] - The message to sign
     // keypair: &Keypair - The keypair to use for signing
     let signature = keypair.sign(&hash);
-    
+
     // Encode the signature as base64
     encode(signature.to_bytes())
 }
-
 // Verify a signature
 pub fn verify_signature(data: &[u8], signature_b64: &str, public_key: &PublicKey) -> Result<bool, String> {
     // Decode the signature
