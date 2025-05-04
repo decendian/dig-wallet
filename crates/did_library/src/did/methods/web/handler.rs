@@ -14,7 +14,8 @@ impl Web {
 impl DIDMethod for Web {
 	fn create_did(&self, options: DIDCreationOptions) -> DIDDocument {
 		todo!()
-	}
+		}
+	
 
 	fn resolve_did(&self, did: &str) -> Result<DIDDocument, &'static str> {
 		todo!()

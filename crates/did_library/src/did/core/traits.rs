@@ -1,7 +1,4 @@
-use ssi::dids::DID;
-use ssi::dids::registration::DIDDocumentOperation;
-use crate::did::core::did_document::{DIDCreationOptions, DIDDocument, VerificationMethod};
-use crate::did::core::key_utils::KeyType;
+use crate::did::core::did_document::{DIDCreationOptions, DIDDocument};
 
 pub trait DIDMethod {
     fn  create_did(&self, options: DIDCreationOptions)  -> DIDDocument;

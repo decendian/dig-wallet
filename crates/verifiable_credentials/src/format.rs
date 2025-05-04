@@ -1,8 +1,14 @@
-use chrono::Utc;
+use chrono::{Months, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use std::fs;
 use std::path::Path;
+use sha2::digest::generic_array::typenum::op;
+use did_library::did::methods::key::handler;
+use did_library::did::core::did_document::{Authentication, DIDCreationOptions, Service, VerificationMethod};
+use did_library::did::core::key_utils::KeyType;
+use did_library::did::core::traits::DIDMethod;
+use did_library::did::methods::key::handler::KeyDID;
 use super::CredentialSubject;  // Use CredentialSubject from the parent module
 use super::keys;
 
@@ -22,6 +28,20 @@ pub struct VerifiableCredential {
     #[serde(rename = "@context")]
     pub context: Vec<String>,
     pub id: String,
+    /// The type of key signature algorithm used for creating did method
+    #[serde(rename = "type")]
+    pub key_type: KeyType,
+    /// Assertion methods (references to verification methods)
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub assertion_method: Vec<String>,
+    /// Authentication methods (references to verification methods)
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub authentication: Vec<Authentication>,
+    pub capability_invocation: Vec<String>,
+    pub capability_delegation: Vec<String>,
+    pub key_agreement: Vec<String>,
+    pub verification_method: Vec<VerificationMethod>,
+    pub service: Vec<Service>,
     pub type_: Vec<String>,
     pub issuer: String,
     #[serde(rename = "issuanceDate")]
@@ -88,25 +108,52 @@ pub fn create_credential(
     subject: CredentialSubject,
     types: Vec<String>,
     expiration_date: Option<String>,
+    options: DIDCreationOptions
 ) -> VerifiableCredential {
+
+    let now = Utc::now();
+    // Format current time for issuanceDate (RFC3339 format)
+    let formatted_issuance_date = now.to_rfc3339_opts(chrono::SecondsFormat::Secs, true); // `true` adds the 'Z' for UTC
+
+    // Calculate expiration date (6 months from now)
+    // This uses checked_add_months which requires the `chrono-months` crate or similar functionality.
+    let future_datetime = now.checked_add_months(Months::new(6))
+      .expect("Failed to add 6 months to current date. Ensure date is valid."); // Consider more robust error handling
+
+    // Format future time for expirationDate (RFC3339 format)
+    let formatted_expiration_date = future_datetime.to_rfc3339_opts(chrono::SecondsFormat::Secs, true); // `true` adds the 'Z' for UTC
     let mut credential_types = vec!["VerifiableCredential".to_string()];
     credential_types.extend(types);
-    
-    // We still use the URL strings as identifiers for compatibility
-    // but we're now ready to use local files if needed
+
+
+    // We can append this later as our definitions become defined
+    // context: vec![
+    //
+    //     "https://www.w3.org/2018/credentials/v1".to_string(),
+    //     "https://www.w3.org/2018/credentials/examples/v1".to_string(),
+    // ],
+
+    let key_did = KeyDID::new().create_did(options);
+
     VerifiableCredential {
-        context: vec![
-            "https://www.w3.org/2018/credentials/v1".to_string(),
-            "https://www.w3.org/2018/credentials/examples/v1".to_string(),
-        ],
-        id: format!("urn:uuid:{}", Uuid::new_v4()),
+        context: key_did.context,
+        id: key_did.id.to_string(),
+        key_type: key_did.key_type,
+        authentication: key_did.authentication,
+        assertion_method: key_did.assertion_method,
+        capability_invocation: key_did.capability_invocation,
+        capability_delegation: key_did.capability_delegation,
+        key_agreement: key_did.key_agreement,
+        verification_method: key_did.verification_method,
+        service: key_did.service,
         type_: credential_types,
         issuer: issuer_did.clone(),
-        issuance_date: Utc::now().to_rfc3339(),
-        expiration_date,
+        issuance_date: formatted_issuance_date,
+        expiration_date: Option::from(expiration_date.unwrap_or(formatted_expiration_date)),
         credential_subject: subject,
         proof: None,
     }
+
 }
 
 /// Loads the content of a context file given its standard URL
