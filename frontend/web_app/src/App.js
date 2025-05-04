@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ISSUE_CREDENTIAL_URL } from './config/api';
+import { ISSUE_CREDENTIAL_URL, CREATE_DID_URL} from './config/api';
 import "./App.css";
 
 function App() {
@@ -7,16 +7,49 @@ function App() {
   const [did, setDid] = useState("");
   const [vc, setVc] = useState("");
   const [age, setAge] = useState("");
+  const [error, setError] = useState(null);
+
 
   /**
    * createDid simulates the creation of a Decentralized Identifier.
    * TODO: Replace stub with a backend API call to create a DID.
    */
-  const createDid = () => {
-    // Dummy DID - in production, you’d call your backend and use a real DID generation mechanism
-    const dummyDid = "did:hedera:12345";
-    setDid(dummyDid);
-    console.log("Created DID:", dummyDid);
+  const createDid = async () => {
+    try {
+      // Optional: Add loading state
+      // setIsLoading(true);
+
+      // Call your backend API
+      const response = await fetch(CREATE_DID_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          // Optional: Include any parameters your backend needs
+          // For example, you might want to specify key_type
+          keyType: 'Ed25519',  // or 'Secp256k1' or 'P256'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+      }
+
+      // Parse the response
+      const did = await response.json();
+
+      // Based on your backend handler.rs, the response should contain a DIDDocument
+      // Extract the 'id' field which contains the DID
+      // Update state
+      setDid(did);
+      console.log("Created DID:", did);
+
+    } catch (error) {
+      console.error("Error creating DID:", error);
+      // Optional: set error state
+      // setError(error.message);
+    }
   };
 
   /**
@@ -75,9 +108,9 @@ function App() {
   const verifyAge = () => {
     // For demo purposes, we simply check if the entered age is 21 or older
     if (parseInt(age, 10) >= 21) {
-      alert("Age verification successful (stub)!");
+      alert("Age verification successful!");
     } else {
-      alert("Age verification failed. Must be 21+ (stub).");
+      alert("Age verification failed. Must be 21+");
     }
   };
 
@@ -89,7 +122,11 @@ function App() {
       <div className="section">
         <h2>1. Create Decentralized Identifier (DID)</h2>
         <button onClick={createDid}>Create DID</button>
-        {did && <p>Your DID: {did}</p>}
+        {did &&
+            <div>
+              <p>Your DID:</p>
+              <pre> {JSON.stringify(did, null, 2)} </pre>
+            </div>}
       </div>
       
       {/* Section 2: Credential Issuance */}

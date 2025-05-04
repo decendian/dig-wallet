@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "verifiable_credentials",
-    "api_server"
+    "api_server",
+    "did_library"
 ]
 resolver = "2"
