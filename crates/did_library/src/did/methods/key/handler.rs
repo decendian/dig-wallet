@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use serde::Serialize;
 use crate::did::core::did_document::{DIDDocument, VerificationMethod, KeyMaterial, DIDCreationOptions};
 use crate::did::core::key_utils::KeyType;
 use crate::did::core::traits::DIDMethod;
@@ -6,86 +8,25 @@ use ssi::jwk::JWK;
 
 pub struct KeyDID;
 
-fn format_did_key(jwk: &serde_json::Value) -> Result<String, &'static str> {
+fn hash_jwk(jwk: &serde_json::Value) ->  Result<HashMap<String, String>, &'static str> {
+
 	// First, determine key type from the JWK
 	let key_type = match jwk.get("crv").and_then(|v| v.as_str()) {
-		Some("Ed25519") => "ed25519",
-		Some("P-256") => "p256",
-		Some("secp256k1") => "secp256k1",
+		Some("Ed25519") => KeyType::Ed25519,
+		Some("P-256") => KeyType::P256,
+		Some("secp256k1") => KeyType::Secp256k1,
 		_ => return Err("Unsupported or missing curve type in JWK"),
 	};
+	let public_key = jwk.get("x");
+	let private_key = jwk.get("d");
 
-	// Initialize key bytes
-	let mut key_bytes = Vec::new();
 
-	match key_type {
-		"ed25519" => {
-			// Ed25519 keys - multicodec prefix 0xed01
-			key_bytes.push(0xed);
-			key_bytes.push(0x01);
+	let mut map = HashMap::new();
+	map.insert("key_type".to_string(), format!("{:?}", key_type));
+	map.insert("public_key".to_string(), public_key.unwrap().to_string());
+	map.insert("private_key".to_string(), private_key.unwrap().to_string());
 
-			// Get the x coordinate (public key)
-			if let Some(x) = jwk.get("x").and_then(|v| v.as_str()) {
-				let decoded = base64::decode(x).map_err(|_| "Invalid base64 in Ed25519 key")?;
-				key_bytes.extend_from_slice(&decoded);
-			} else {
-				return Err("Missing x coordinate in Ed25519 key");
-			}
-		},
-		"p256" => {
-			// P-256 keys - multicodec prefix 0x1200
-			key_bytes.push(0x12);
-			key_bytes.push(0x00);
-
-			// Get x and y coordinates
-			let x = jwk.get("x").and_then(|v| v.as_str())
-				.ok_or("Missing x coordinate in P-256 key")?;
-			let y = jwk.get("y").and_then(|v| v.as_str())
-				.ok_or("Missing y coordinate in P-256 key")?;
-
-			// Decode x and y
-			let x_bytes = base64::decode(x).map_err(|_| "Invalid base64 in x coordinate")?;
-			let y_bytes = base64::decode(y).map_err(|_| "Invalid base64 in y coordinate")?;
-
-			// Determine if y is odd or even for compressed format
-			let is_y_odd = y_bytes.last().map(|b| b & 1 == 1).unwrap_or(false);
-			let prefix = if is_y_odd { 0x03 } else { 0x02 };
-
-			// Add format prefix and x coordinate
-			key_bytes.push(prefix);
-			key_bytes.extend_from_slice(&x_bytes);
-		},
-		"secp256k1" => {
-			// secp256k1 keys - multicodec prefix 0xe701
-			key_bytes.push(0xe7);
-			key_bytes.push(0x01);
-
-			// Get x and y coordinates
-			let x = jwk.get("x").and_then(|v| v.as_str())
-				.ok_or("Missing x coordinate in secp256k1 key")?;
-			let y = jwk.get("y").and_then(|v| v.as_str())
-				.ok_or("Missing y coordinate in secp256k1 key")?;
-
-			// Decode x and y
-			let x_bytes = base64::decode(x).map_err(|_| "Invalid base64 in x coordinate")?;
-			let y_bytes = base64::decode(y).map_err(|_| "Invalid base64 in y coordinate")?;
-
-			// Determine if y is odd or even for compressed format
-			let is_y_odd = y_bytes.last().map(|b| b & 1 == 1).unwrap_or(false);
-			let prefix = if is_y_odd { 0x03 } else { 0x02 };
-
-			// Add format prefix and x coordinate
-			key_bytes.push(prefix);
-			key_bytes.extend_from_slice(&x_bytes);
-		},
-		_ => return Err("Unsupported key type"),
-	};
-
-	// Convert to Base58
-	// Note: You'll need to add bs58 to your dependencies
-	let encoded = bs58::encode(key_bytes).into_string();
-
-	Ok(format!("did:key:{}", encoded))
+	Ok(map)
 }
 
 
@@ -125,22 +66,20 @@ impl DIDMethod for KeyDID {
 		let did_prefix = String::from("did:key:");
 		
 		let key_type = options.key_type.unwrap_or(KeyType::Ed25519);
-
 		let jwk_string = match key_type {
 			KeyType::Ed25519 => JWK::generate_ed25519().expect("Failed to generate Ed25519 key"),
 			KeyType::Secp256k1 => JWK::generate_secp256k1(),
 			KeyType::P256 => JWK::generate_p256(),
 		}.to_string();
 
-		// let jwk = serde_json::from_str(&jwk_string).unwrap();
-		// println!("{:?}", jwk);
-		// let did_key = format_did_key(&jwk).unwrap();
-		
-		let key_material = did_prefix + uuid::Uuid::new_v4().simple().to_string().as_str();
-		
+		let serialize_jwk =  &serde_json::from_str(jwk_string.as_str()).expect("TODO: panic message");
+		let jwk_hash = hash_jwk(serialize_jwk);
+		let key_map = jwk_hash.unwrap(); // Store the HashMap
+		let public_key = key_map.get("public_key").unwrap(); // Borrow from the stored map
+		let trimmed = public_key.trim_matches('"');
+		let key_material = did_prefix + trimmed;
 		let mut document = DIDDocument::new(key_material.as_str(), key_type);
 		
-
 		// Use `if let Some(values)` and `extend` where appropriate
 		if options.verification_method.is_none() {
 			// Create a verification method from the key material
