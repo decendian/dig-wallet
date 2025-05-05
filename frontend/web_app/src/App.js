@@ -3,9 +3,9 @@ import {
   ISSUE_CREDENTIAL_URL, 
   CREATE_PRESENTATION_URL,
   REQUEST_PRESENTATION_URL, 
-  VERIFY_PRESENTATION_URL 
+  VERIFY_PRESENTATION_URL,
+  CREATE_DID_URL 
 } from './config/api';
-import { ISSUE_CREDENTIAL_URL, CREATE_DID_URL} from './config/api';
 import "./App.css";
 
 function App() {
@@ -147,11 +147,14 @@ function App() {
         return;
       }
       
+      // Extract just the DID string from the DID document
+      const holderDidString = did ? did.id : 'did:example:holder';
+      
       const response = await fetch(CREATE_PRESENTATION_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          holder_did: did || 'did:example:holder',
+          holder_did: holderDidString,  // Use the string, not the object
           credentials: [vc],
           challenge: presentationRequest.challenge,
           domain: presentationRequest.domain
