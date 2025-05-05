@@ -1,10 +1,10 @@
 use chrono::{Months, Utc};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+// use uuid::Uuid; // Uncomment if you need UUID generation
 use std::fs;
 use std::path::Path;
-use sha2::digest::generic_array::typenum::op;
-use did_library::did::methods::key::handler;
+// use sha2::digest::generic_array::typenum::op; // Uncomment if you need SHA2 hashing
+// use did_library::did::methods::key::handler; // Uncomment if you need DID methods
 use did_library::did::core::did_document::{Authentication, DIDCreationOptions, Service, VerificationMethod};
 use did_library::did::core::key_utils::KeyType;
 use did_library::did::core::traits::DIDMethod;
@@ -125,14 +125,6 @@ pub fn create_credential(
     let mut credential_types = vec!["VerifiableCredential".to_string()];
     credential_types.extend(types);
 
-
-    // We can append this later as our definitions become defined
-    // context: vec![
-    //
-    //     "https://www.w3.org/2018/credentials/v1".to_string(),
-    //     "https://www.w3.org/2018/credentials/examples/v1".to_string(),
-    // ],
-
     let key_did = KeyDID::new().create_did(options);
 
     VerifiableCredential {
@@ -149,7 +141,7 @@ pub fn create_credential(
         type_: credential_types,
         issuer: issuer_did.clone(),
         issuance_date: formatted_issuance_date,
-        expiration_date: Option::from(expiration_date.unwrap_or(formatted_expiration_date)),
+        expiration_date: expiration_date.or(Some(formatted_expiration_date)),
         credential_subject: subject,
         proof: None,
     }
