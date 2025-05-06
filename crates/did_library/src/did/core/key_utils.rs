@@ -3,6 +3,7 @@
 //! This module provides cryptographic key utilities for creating and
 //! manipulating keys used in DIDs.
 
+use std::collections::HashMap;
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 
@@ -25,6 +26,35 @@ pub struct PublicKey {
 
     /// Raw key bytes
     pub key_bytes: Vec<u8>,
+}
+/// Hash a JWK into three fields: key_type, public_key, and private_key.
+/// Note all key,value pairs are strings
+pub fn hash_jwk(jwk: &serde_json::Value) -> Result<HashMap<String, String>, String> {
+  // First, determine key type from the JWK
+  let key_type = match jwk.get("crv").and_then(|v| v.as_str()) {
+    Some("Ed25519") => KeyType::Ed25519,
+    Some("secp256k1") => KeyType::Secp256k1,
+    Some("P-256") => KeyType::P256,
+    Some(curve) => return Err(format!("The curve {} is not supported", curve)),
+    _ => return Err("The curve should be one of Ed25519, secp256k1, or P-256".into()),
+  };
+  
+  let public_key = jwk.get("x")
+    .ok_or_else(|| "Missing public key (x) in JWK".to_string())?
+    .as_str()
+    .ok_or_else(|| "Public key is not a string".to_string())?;
+
+  let private_key = jwk.get("d")
+    .ok_or_else(|| "Missing private key (d) in JWK".to_string())?
+    .as_str()
+    .ok_or_else(|| "Private key is not a string".to_string())?;
+
+  let mut map = HashMap::new();
+  map.insert("key_type".to_string(), format!("{:?}", key_type));
+  map.insert("public_key".to_string(), public_key.to_string());
+  map.insert("private_key".to_string(), private_key.to_string());
+
+  Ok(map)
 }
 
 /// A private key used for signing
@@ -77,6 +107,7 @@ impl PublicKey {
         true
     }
 }
+
 
 impl PrivateKey {
         /// Create a new private key
