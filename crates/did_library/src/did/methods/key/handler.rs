@@ -126,11 +126,7 @@ impl DIDMethod for KeyDID {
     /*
     	* Modifies an existing DID Document (adding keys, rotating keys, changing services, etc.).
      */
-    fn update_did(
-        &self,
-        did: &str,
-        options: DIDCreationOptions,
-    ) -> Result<DIDDocument, &'static str> {
+    fn update_did(&self, did: &str, options: DIDCreationOptions) -> Result<DIDDocument, &'static str> {
         // Validate DID format
         if !did.starts_with("did:key:") {
             return Err("Invalid DID: Must start with 'did:key:'");
