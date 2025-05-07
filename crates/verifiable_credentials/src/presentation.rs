@@ -151,7 +151,7 @@ pub fn sign_presentation(
     let canonical = serde_json::to_string(&presentation_for_signing)
         .map_err(|e| format!("Serialization error: {}", e))?;
     
-    // Get the demo keypair (in production, you'd retrieve the holder's key)
+    // TODO: Get real key pair instead of demo keypair (KIA THIS IS FOR YOU. DO THIS!)
     let keypair = keys::get_demo_keypair();
     
     // Sign the canonicalized data using base64 encoding
@@ -246,10 +246,11 @@ pub fn create_presentation_submission(
     definition_id: String,
     descriptor_ids: Vec<String>,
 ) -> PresentationSubmission {
+    let  LDP_VAL = "ldp_vp".to_string();
     let mappings = descriptor_ids.into_iter().enumerate().map(|(index, id)| {
         DescriptorMapping {
             id,
-            format: "ldp_vp".to_string(),
+            format: LDP_VAL.clone(),
             path: format!("$.verifiableCredential[{}]", index),
         }
     }).collect();

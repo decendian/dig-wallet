@@ -125,6 +125,13 @@ pub fn create_credential(
     let mut credential_types = vec!["VerifiableCredential".to_string()];
     credential_types.extend(types);
 
+    // We can append this later as our definitions become defined
+    // context: vec![
+    //
+    //     "https://www.w3.org/2018/credentials/v1".to_string(),
+    //     "https://www.w3.org/2018/credentials/examples/v1".to_string(),
+    // ],
+
     let key_did = KeyDID::new().create_did(options);
 
     VerifiableCredential {
