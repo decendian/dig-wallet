@@ -27,6 +27,7 @@ pub struct PublicKey {
     /// Raw key bytes
     pub key_bytes: Vec<u8>,
 }
+
 /// Hash a JWK into three fields: key_type, public_key, and private_key.
 /// Note all key,value pairs are strings
 pub fn hash_jwk(jwk: &serde_json::Value) -> Result<HashMap<String, String>, String> {
@@ -55,6 +56,25 @@ pub fn hash_jwk(jwk: &serde_json::Value) -> Result<HashMap<String, String>, Stri
   map.insert("private_key".to_string(), private_key.to_string());
 
   Ok(map)
+}
+
+pub fn decode_key_type(did: &str) -> Result<KeyType, &'static str> {
+  if !did.starts_with("did:key:") {
+    return Err("Invalid DID: Must start with 'did:key:'");
+  }
+  let encoded_key = did.replace("did:key:", "");
+
+  if encoded_key.len() < 2 {
+    return Err("Invalid DID: Must be at least 2 characters long");
+  }
+  let prefix_bytes: &[u8] = &encoded_key.as_bytes()[..2];
+
+  match prefix_bytes {
+    [0xed, 0x01] => Ok(KeyType::Ed25519),
+    [0xe7, 0x01] => Ok(KeyType::Secp256k1),
+    [0x12, 0x00] => Ok(KeyType::P256),
+    _ => Err("Key Type not supported"),
+  }
 }
 
 /// A private key used for signing
@@ -107,7 +127,6 @@ impl PublicKey {
         true
     }
 }
-
 
 impl PrivateKey {
         /// Create a new private key

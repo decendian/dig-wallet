@@ -1,37 +1,17 @@
 use crate::did::core::did_document::*;
-use crate::did::core::key_utils::KeyType;
+use crate::did::core::key_utils;
+use crate::did::core::key_utils::*;
 use crate::did::core::traits::DIDMethod;
 use serde::Serialize;
 use ssi::jwk::JWK;
 use std::collections::HashMap;
-use crate::did::core::key_utils;
 
 pub struct KeyDID;
-
 
 /// Helpers specific to the Key DID method.
 impl KeyDID {
     pub fn new() -> Self {
         Self {}
-    }
-
-    pub fn decode_key_type(did: &str) -> Result<KeyType, &'static str> {
-        if !did.starts_with("did:key:") {
-            return Err("Invalid DID: Must start with 'did:key:'");
-        }
-        let encoded_key = did.replace("did:key:", "");
-
-        if encoded_key.len() < 2 {
-            return Err("Invalid DID: Must be at least 2 characters long");
-        }
-        let prefix_bytes: &[u8] = &encoded_key.as_bytes()[..2];
-
-        match prefix_bytes {
-            [0xed, 0x01] => Ok(KeyType::Ed25519),
-            [0xe7, 0x01] => Ok(KeyType::Secp256k1),
-            [0x12, 0x00] => Ok(KeyType::P256),
-            _ => Err("Key Type not supported"),
-        }
     }
 }
 
@@ -51,25 +31,22 @@ impl DIDMethod for KeyDID {
         }
         .to_string();
 
-        let serialize_jwk: serde_json::Value = serde_json::from_str(&jwk_string)
-          .expect("Failed to parse JWK");
-        let key_map = key_utils::hash_jwk(&serialize_jwk)
-          .expect("Failed to extract key components");
+        let serialize_jwk: serde_json::Value =
+            serde_json::from_str(&jwk_string).expect("Failed to parse JWK");
+        let key_map =
+            key_utils::hash_jwk(&serialize_jwk).expect("Failed to extract key components");
         let public_key = key_map.get("public_key").expect("Missing public key");
         let key_material = did_prefix + public_key;
         let mut document = DIDDocument::new(&key_material, key_type);
 
-
         // Use `if let Some(values)` and `extend` where appropriate
         if options.verification_method.is_none() {
             // Create a verification method from the key material
-
             let vm_type: &str = match key_type {
                 KeyType::Ed25519 => "Ed25519VerificationKey2020",
                 KeyType::Secp256k1 => "EcdsaSecp256k1VerificationKey2019",
                 KeyType::P256 => "P256VerificationKey2021",
             };
-
             let method = VerificationMethod {
                 id: format!("#{}", key_material.to_string()),
                 vm_type: vm_type.to_string(),
@@ -106,8 +83,14 @@ impl DIDMethod for KeyDID {
         if let Some(services) = options.service {
             document.add_service(&services);
         }
+        // Store the created document in the registry
+        if let Err(err) = crate::did::registry::get_registry().store(document.clone()) {
+            // Log error but continue - the document is still valid
+            eprintln!("Failed to store DID in registry: {}", err);
+        }
         document
     }
+
     /*
     	* Retrieves the current DID Document for an existing DID
     	*/
@@ -115,18 +98,22 @@ impl DIDMethod for KeyDID {
         if !did.starts_with("did:key:") {
             return Err("Invalid DID: Must start with 'did:key:'");
         }
-        let key_type = Self::decode_key_type(did);
+        let key_type = decode_key_type(did);
 
         match key_type {
             Ok(key_type) => Ok(DIDDocument::new(did, key_type)),
-            Err(err) => Err(err),
+            Err(err) => Err(err.into()),
         }
     }
 
     /*
     	* Modifies an existing DID Document (adding keys, rotating keys, changing services, etc.).
      */
-    fn update_did(&self, did: &str, options: DIDCreationOptions) -> Result<DIDDocument, &'static str> {
+    fn update_did(
+        &self,
+        did: &str,
+        options: DIDCreationOptions,
+    ) -> Result<DIDDocument, &'static str> {
         // Validate DID format
         if !did.starts_with("did:key:") {
             return Err("Invalid DID: Must start with 'did:key:'");
