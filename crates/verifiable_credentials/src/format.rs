@@ -14,7 +14,7 @@ use super::keys;
 
 /// Path to the resources directory that stores local copies of context files
 /// This points one directory up from the crate to access the shared resources folder
-const RESOURCES_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../resources");
+const RESOURCES_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/resources");
 
 /// Represents a W3C Verifiable Credential
 /// 

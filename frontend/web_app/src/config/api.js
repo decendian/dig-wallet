@@ -1,6 +1,6 @@
 // Get the API URL from environment variables
 // CRA automatically injects environment variables that start with REACT_APP_
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+const API_URL = process.env.REACT_APP_API_URL;
 
 // Configuration object for all API endpoints
 export const apiConfig = {

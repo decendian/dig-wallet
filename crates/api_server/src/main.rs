@@ -73,8 +73,6 @@ pub struct CreateDIDResponse {
     document: DIDDocument,
 }
 
-
-
 /// Handler for creating a new DID
 /// This endpoint generates a new decentralized identifier using KeyDID method
 async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
@@ -149,8 +147,6 @@ async fn issue_credential_handler(req: web::Json<IssueCredentialRequest>) -> imp
         })),
     }
 }
-
-
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
