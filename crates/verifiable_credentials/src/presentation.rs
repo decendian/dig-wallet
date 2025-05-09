@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::format::VerifiableCredential;
 use crate::keys;
 use chrono::Utc;
@@ -192,13 +194,27 @@ pub fn create_presentation_definition(
     credential_types: Vec<String>,
     fields: Vec<(String, bool)>, // (field path, is optional)
     purpose: Option<String>,
+    path_prefix: Option<String>, // New parameter for configurable prefix
+    field_filters: Option<HashMap<String, serde_json::Value>>, // New parameter for field filters
 ) -> PresentationDefinition {
     // Convert the requested fields to the Field structure
     let constraint_fields: Vec<Field> = fields.iter().map(|(path, optional)| {
+        // Use configurable prefix with default fallback
+        let full_path = match &path_prefix {
+            Some(prefix) => format!("{}.{}", prefix, path),
+            None => format!("$.credentialSubject.{}", path) // Default
+        };
+        
+        // Get filter for this path if available
+        let filter = field_filters
+            .as_ref()
+            .and_then(|filters| filters.get(path))
+            .cloned();
+            
         Field {
-            path: vec![format!("$.credentialSubject.{}", path)],
+            path: vec![full_path],
             optional: Some(*optional),
-            filter: None,
+            filter, // Use the filter from the map or None if not specified
         }
     }).collect();
     
@@ -246,10 +262,10 @@ pub fn create_presentation_submission(
     definition_id: String,
     descriptor_ids: Vec<String>,
 ) -> PresentationSubmission {
-    let  LDP_VAL = "ldp_vp".to_string();
-    let mappings = descriptor_ids.into_iter().enumerate().map(|(index, id)| {
+    let LDP_VAL = "ldp_vp".to_string();
+    let mappings = descriptor_ids.iter().enumerate().map(|(index, id)| {
         DescriptorMapping {
-            id,
+            id: id.clone(), // Need to clone because iter() provides references
             format: LDP_VAL.clone(),
             path: format!("$.verifiableCredential[{}]", index),
         }
@@ -306,6 +322,8 @@ pub mod exchange {
                 credential_types,
                 fields,
                 purpose,
+            None, // Add `path_prefix` argument
+            None, // Add `field_filters` argument
             ),
             challenge,
             domain: None,
