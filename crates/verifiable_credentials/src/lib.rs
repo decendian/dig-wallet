@@ -63,12 +63,7 @@ pub fn get_did_registry() -> Result<Value, Box<dyn std::error::Error>> {
     let registry_path = project_root
         .join("did_library/resources/did_registry.json");
     
-    println!("Loading DID registry from: {}", registry_path.display());
-    
-    // Read and parse the file
-    let file_content = fs::read_to_string(&registry_path)
-        .map_err(|e| format!("Failed to read registry at {}: {}", 
-                            registry_path.display(), e))?;
+    let file_content = fs::read_to_string(&registry_path)?;
     let registry: Value = serde_json::from_str(&file_content)?;
     Ok(registry)
 }
@@ -193,15 +188,16 @@ pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredenti
         capability_delegation: None,
         service: None,
     };
-    
-    //TODO: Work in progress, need to get the registry from the DID library
-    // let binding = get_did_registry().unwrap();
-    // let registry = binding.as_object();
-
+    let mut did_string = String::new();
+    let registry = get_did_registry().unwrap();
+    if let Some(obj) = registry.as_object() {
+        for (did_key, document) in obj {
+            did_string = did_key.to_string();
+        }
+    }
     // Create a new credential based on the request
     let mut credential = format::create_credential(
-        // registry.expect("couldn't parse object").get("id").unwrap().to_string(),
-        request.issuer_did,
+        did_string,
         request.subject,
         request.type_,
         request.expiration_date,

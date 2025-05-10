@@ -1,8 +1,8 @@
 pub mod did_storage;
 
+use did_storage::DIDRegistry;
 use std::sync::Once;
-use std::sync::OnceLock;
-use did_storage::DIDRegistry;  // Use your local DIDRegistry implementation
+use std::sync::OnceLock; // Use your local DIDRegistry implementation
 
 static REGISTRY: OnceLock<DIDRegistry> = OnceLock::new();
 static INIT: Once = Once::new();

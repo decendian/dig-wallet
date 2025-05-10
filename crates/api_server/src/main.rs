@@ -1,13 +1,13 @@
 use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer, Responder};
 use config::{Config, ConfigError, Environment, File};
+use did_library::did::core::key_utils::KeyType;
 use did_library::did::core::{did_document::DIDCreationOptions, traits::DIDMethod};
+use did_library::did::methods::key::handler::KeyDID;
+use did_library::DIDDocument;
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 use std::env;
-use did_library::did::core::key_utils::KeyType;
-use did_library::did::methods::key::handler::KeyDID;
-use did_library::DIDDocument;
 use verifiable_credentials::{self, CredentialRequest, CredentialSubject};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -65,8 +65,7 @@ struct IssueCredentialRequest {
 }
 
 #[derive(Deserialize)]
-struct CreateDIDRequest {
-}
+struct CreateDIDRequest {}
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateDIDResponse {
@@ -76,6 +75,21 @@ pub struct CreateDIDResponse {
 /// Handler for creating a new DID
 /// This endpoint generates a new decentralized identifier using KeyDID method
 async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
+
+    // Path to the registry file
+    let registry_path = "../did_library/resources/did_registry.json";
+
+    // Check if the registry file exists and has content
+    if let Ok(metadata) = std::fs::metadata(registry_path) {
+        if metadata.len() > 0 {
+            // Registry exists and has content
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "DID registry already exists. No new DID will be created."
+            }));
+        }
+    }
+
+    // If we get here, either the file doesn't exist or is empty
     // Create a new KeyDID instance
     let did_method = KeyDID::new();
 
@@ -91,11 +105,18 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
         service: None,
     };
 
-    // Create the DID document
+    //TODO: Dynamically load and configure path for registry initialization (from .env file).
+    // Alireza if you see this, you are going to laugh at me for not doing this.
+    did_library::did::registry::init_registry(Some(
+        "../did_library/resources/did_registry.json".to_string(),
+    ));
+
     let document = did_method.create_did(options);
 
     // Return the DID document
-    HttpResponse::Ok().json(document)}
+    HttpResponse::Ok().json(document)
+
+}
 
 async fn issue_credential_handler(req: web::Json<IssueCredentialRequest>) -> impl Responder {
     // Extract the name from the subject data
@@ -183,7 +204,9 @@ async fn main() -> std::io::Result<()> {
                         web::scope("/credentials")
                             .route("/issue", web::post().to(issue_credential_handler)),
                     )
-                  .service(web::scope("/did").route("/create", web::post().to(create_did_handler))),
+                    .service(
+                        web::scope("/did").route("/create", web::post().to(create_did_handler)),
+                    ),
             )
     })
     .bind((config.host, config.port))?

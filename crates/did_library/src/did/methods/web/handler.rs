@@ -10,7 +10,6 @@ impl Web {
 	}
 }
 
-
 impl DIDMethod for Web {
 	fn create_did(&self, options: DIDCreationOptions) -> DIDDocument {
 		todo!()
@@ -21,7 +20,11 @@ impl DIDMethod for Web {
 		todo!()
 	}
 
-	fn update_did(&self, did: &str, option: DIDCreationOptions) -> Result<DIDDocument, &'static str> {
-		todo!()
-	}
+    fn update_did(
+        &self,
+        did: &str,
+        option: DIDCreationOptions,
+    ) -> Result<DIDDocument, &'static str> {
+        todo!()
+    }
 }
