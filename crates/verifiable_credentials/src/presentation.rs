@@ -148,23 +148,53 @@ pub fn sign_presentation(
     // Create a copy without the proof
     let mut presentation_for_signing = presentation.clone();
     presentation_for_signing.proof = None;
-    
+
     // Canonicalize (deterministic serialization)
     let canonical = serde_json::to_string(&presentation_for_signing)
         .map_err(|e| format!("Serialization error: {}", e))?;
-    
+
     // TODO: Get real key pair instead of demo keypair (KIA THIS IS FOR YOU. DO THIS!)
     let keypair = keys::get_demo_keypair();
     
+    // Determine the signature type based on the credential type in the presentation
+    let signature_type = if let Some(credential) = presentation.verifiable_credential.first() {
+        // Extract the key type from the credential
+        // Check the top-level "type" field first
+        if credential.type_.contains(&"Ed25519".to_string()) {
+            "Ed25519Signature2020"
+        } else if credential.type_.contains(&"Secp256k1".to_string()) {
+            "EcdsaSecp256k1Signature2019"
+        } else if credential.type_.contains(&"P256".to_string())  {
+            "EcdsaP256Signature2019"
+        } 
+        // Fallback to checking verification_method type if available
+        else if let Some(verification_method) = credential.verification_method.first() {
+            if verification_method.vm_type.contains("Ed25519") {
+                "Ed25519Signature2020"
+            } else if verification_method.vm_type.contains("Secp256k1") {
+                "EcdsaSecp256k1Signature2019"
+            } else if verification_method.vm_type.contains("P256") {
+                "EcdsaP256Signature2019"
+            } else {
+                "Ed25519Signature2020" // Default
+            }
+        } else {
+            "Ed25519Signature2020" // Default
+        }
+    } else {
+        // Default to Ed25519 if there are no credentials
+        "Ed25519Signature2020"
+    }.to_string();
+
     // Sign the canonicalized data using base64 encoding
     let signature = keys::sign_data(canonical.as_bytes(), &keypair);
-    
+
     // Add the proof
     let created = Utc::now().to_rfc3339();
     let verification_method = format!("{}#key-1", presentation.holder);
-    
+
     presentation.proof = Some(PresentationProof {
-        type_: "Ed25519Signature2020".to_string(),
+        type_: signature_type,
         created,
         verification_method,
         proof_purpose: "authentication".to_string(),
@@ -172,7 +202,7 @@ pub fn sign_presentation(
         domain,
         proof_value: signature,
     });
-    
+
     Ok(())
 }
 
