@@ -10,6 +10,27 @@ use did_library::did::methods::key::handler::KeyDID;
 use did_library::DIDDocument;
 use verifiable_credentials::{self, CredentialRequest, CredentialSubject};
 
+#[derive(Deserialize)]
+struct CreatePresentationRequest {
+    holder_did: String,
+    credentials: Vec<verifiable_credentials::format::VerifiableCredential>,
+    challenge: Option<String>,
+    domain: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct PresentationDefinitionRequest {
+    credential_types: Vec<String>,
+    fields: Vec<(String, bool)>, // (field path, is optional)
+    purpose: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct VerifyPresentationRequest {
+    original_request: verifiable_credentials::presentation::exchange::PresentationRequest,
+    presentation_response: verifiable_credentials::presentation::exchange::PresentationResponse,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 struct ServerConfig {
     host: String,
@@ -150,6 +171,62 @@ async fn issue_credential_handler(req: web::Json<IssueCredentialRequest>) -> imp
     }
 }
 
+// Add these new handlers
+async fn create_presentation_handler(
+    req: web::Json<CreatePresentationRequest>,
+) -> impl Responder {
+    // Create a presentation from the provided credentials
+    let mut presentation = verifiable_credentials::presentation::create_presentation(
+        req.holder_did.clone(),
+        req.credentials.clone(),
+        req.challenge.clone(),
+        req.domain.clone(),
+    );
+    
+    // Sign the presentation
+    match verifiable_credentials::presentation::sign_presentation(
+        &mut presentation,
+        req.challenge.clone(),
+        req.domain.clone(),
+    ) {
+        Ok(_) => HttpResponse::Ok().json(presentation),
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": e
+        })),
+    }
+}
+
+async fn create_presentation_request_handler(
+    req: web::Json<PresentationDefinitionRequest>,
+) -> impl Responder {
+    // Create a presentation request
+    let request = verifiable_credentials::presentation::exchange::create_request(
+        req.credential_types.clone(),
+        req.fields.clone(),
+        req.purpose.clone(),
+    );
+    
+    HttpResponse::Ok().json(request)
+}
+
+async fn verify_presentation_handler(
+    req: web::Json<VerifyPresentationRequest>,
+) -> impl Responder {
+    // Verify the presentation
+    match verifiable_credentials::presentation::exchange::verify_response(
+        &req.original_request,
+        &req.presentation_response,
+    ) {
+        Ok(is_valid) => HttpResponse::Ok().json(serde_json::json!({
+            "is_valid": is_valid
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": e
+        })),
+    }
+}
+
+
 
 
 #[actix_web::main]
@@ -176,8 +253,7 @@ async fn main() -> std::io::Result<()> {
             .allow_any_origin()
             .allow_any_method()
             .allow_any_header();
-
-        // TODO: Look into loggers later
+    
         App::new()
             .wrap(middleware::Logger::default())
             .wrap(cors)
@@ -186,6 +262,12 @@ async fn main() -> std::io::Result<()> {
                     .service(
                         web::scope("/credentials")
                             .route("/issue", web::post().to(issue_credential_handler)),
+                    )
+                    .service(
+                        web::scope("/presentations")
+                            .route("/create", web::post().to(create_presentation_handler))
+                            .route("/request", web::post().to(create_presentation_request_handler))
+                            .route("/verify", web::post().to(verify_presentation_handler))
                     )
                   .service(web::scope("/did").route("/create", web::post().to(create_did_handler))),
             )
