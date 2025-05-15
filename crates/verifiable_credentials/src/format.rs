@@ -14,7 +14,7 @@ use super::keys;
 
 /// Path to the resources directory that stores local copies of context files
 /// This points one directory up from the crate to access the shared resources folder
-const RESOURCES_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../resources");
+const RESOURCES_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/resources");
 
 /// Represents a W3C Verifiable Credential
 /// 
@@ -134,15 +134,17 @@ pub fn create_credential(
 
     let key_did = KeyDID::new().create_did(options);
 
+    // Make it based it on the did_registry.json created file
     VerifiableCredential {
         context: key_did.context,
-        id: key_did.id.to_string(),
+        id: issuer_did.clone(),
         key_type: key_did.key_type,
         authentication: key_did.authentication,
         assertion_method: key_did.assertion_method,
         capability_invocation: key_did.capability_invocation,
         capability_delegation: key_did.capability_delegation,
         key_agreement: key_did.key_agreement,
+        //TODO: Tie verification_method to the did_registry.json did
         verification_method: key_did.verification_method,
         service: key_did.service,
         type_: credential_types,

@@ -8,7 +8,7 @@ target
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
-
+/crates/did_library/resources
 
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 

@@ -4,10 +4,15 @@ pub mod keys;
 pub mod presentation; // Add this line
 
 use std::collections::HashMap;
+use std::fs;
+use std::path::Path;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use did_library::did::core::did_document::*;
 use did_library::did::core::key_utils::KeyType;
 use crate::format::VerifiableCredential;
+use std::env;
+use std::path::{PathBuf};
 
 // Re-export important types and functions
 #[derive(Serialize, Deserialize, Clone)]
@@ -23,6 +28,45 @@ pub struct CredentialSubject {
     pub id: Option<String>,
     pub name: String,
     pub attributes: serde_json::Value,
+}
+
+/// Find the project root by looking for the workspace Cargo.toml
+fn find_project_root() -> Option<PathBuf> {
+    let mut current_dir = env::current_dir().ok()?;
+    
+    loop {
+        let cargo_toml_path = current_dir.join("Cargo.toml");
+        
+        if cargo_toml_path.exists() {
+            if let Ok(content) = fs::read_to_string(&cargo_toml_path) {
+                // Check if this is the workspace root Cargo.toml
+                if content.contains("[workspace]") && content.contains("\"did_library\"") {
+                    return Some(current_dir);
+                }
+            }
+        }
+        
+        if !current_dir.pop() {
+            break;
+        }
+    }
+    
+    None
+}
+
+/// Provides access to the DID registry JSON file
+pub fn get_did_registry() -> Result<Value, Box<dyn std::error::Error>> {
+    // Find the project root
+    let project_root = find_project_root()
+        .ok_or("Could not find project root")?;
+    
+    // Construct the path to the registry file
+    let registry_path = project_root
+        .join("did_library/resources/did_registry.json");
+    
+    let file_content = fs::read_to_string(&registry_path)?;
+    let registry: Value = serde_json::from_str(&file_content)?;
+    Ok(registry)
 }
 
 // Public function to issue credentials
@@ -145,17 +189,22 @@ pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredenti
         capability_delegation: None,
         service: None,
     };
-    
-    
+    let mut did_string = String::new();
+    let registry = get_did_registry().unwrap();
+    if let Some(obj) = registry.as_object() {
+        for (did_key, document) in obj {
+            did_string = did_key.to_string();
+        }
+    }
     // Create a new credential based on the request
     let mut credential = format::create_credential(
-        request.issuer_did,
+        did_string,
         request.subject,
         request.type_,
         request.expiration_date,
         option2
     );
-
+    
     // Sign the credential
     match format::sign_credential(&mut credential) {
         Ok(_) => Ok(credential),

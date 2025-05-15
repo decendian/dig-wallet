@@ -3,18 +3,17 @@
 //! A DID Document contains information associated with a DID,
 //! including public keys, authentication methods, and services.
 
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use crate::did::core::key_utils::KeyType;
 use chrono::{Months, Utc};
+use serde::{Deserialize, Serialize};
 use ssi::claims::chrono;
 use ssi::xsd::Datatype::Date;
-use crate::did::core::key_utils::KeyType;
+use std::collections::HashMap;
 
-/// A structure representing a Decentralized Identifier (DID) Document. 
-/// This DID Document conforms to the DID specification highlighted by W3C standards 
+/// A structure representing a Decentralized Identifier (DID) Document.
+/// This DID Document conforms to the DID specification highlighted by W3C standards
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DIDDocument {
-
     #[serde(rename = "@context")]
     pub context: Vec<String>,
 
@@ -37,7 +36,7 @@ pub struct DIDDocument {
     /// A list of verification method references which give the ability to modify the did document.
     /// This Includes adding or removing keys, service endpoints, and controllers
     pub capability_invocation: Vec<String>,
-    
+
     /// Part of the guardianship module:
     /// A list of verification method references that can be used
     /// by the DID subject to delegate authorization to others. This allows
@@ -66,7 +65,7 @@ pub struct DIDCreationOptions {
     pub key_agreement: Option<Vec<String>>,
     pub capability_invocation: Option<Vec<String>>,
     pub capability_delegation: Option<Vec<String>>,
-    pub service: Option<Vec<Service>>
+    pub service: Option<Vec<Service>>,
 }
 
 /// Verification Method representing a public key
@@ -97,13 +96,12 @@ pub enum Authentication {
     Embedded(VerificationMethod),
 }
 
-
 pub struct AssertionMethod {
     pub assertion_method: Vec<String>,
 }
 
 pub struct KeyAgreement {
-  pub key_agreement: Vec<String>,
+    pub key_agreement: Vec<String>,
 }
 
 pub struct CapabilityInvocation {
@@ -135,7 +133,6 @@ pub struct Service {
     pub properties: HashMap<String, serde_json::Value>,
 }
 
-
 /// Different formats of key material
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -161,24 +158,23 @@ pub enum KeyMaterial {
 }
 
 impl DIDDocument {
-            /// Create a new DID Document
-        pub fn new(id: &str, key_type: KeyType) -> Self {
-
-            DIDDocument {
-                context: vec!["https://www.w3.org/ns/did/v1".to_string()],
-                id: id.to_string(),
-                key_type,
-                verification_method: Vec::new(),
-                authentication: Vec::new(),
-                assertion_method: Vec::new(),
-                key_agreement: Vec::new(),
-                capability_invocation: Vec::new(),
-                capability_delegation: Vec::new(),
-                service: Vec::new(),
-            }
+    /// Create a new DID Document
+    pub fn new(id: &str, key_type: KeyType) -> Self {
+        DIDDocument {
+            context: vec!["https://www.w3.org/ns/did/v1".to_string()],
+            id: id.to_string(),
+            key_type,
+            verification_method: Vec::new(),
+            authentication: Vec::new(),
+            assertion_method: Vec::new(),
+            key_agreement: Vec::new(),
+            capability_invocation: Vec::new(),
+            capability_delegation: Vec::new(),
+            service: Vec::new(),
         }
+    }
 
-        /// Add a verification method to the document
+    /// Add a verification method to the document
     pub fn add_verification_method(&mut self, methods: &Vec<VerificationMethod>) {
         self.verification_method.extend_from_slice(methods);
     }
@@ -196,7 +192,7 @@ impl DIDDocument {
         self.key_agreement.extend_from_slice(keys)
     }
 
-    pub fn add_capability_invocation(&mut self,keys: &Vec<String>) {
+    pub fn add_capability_invocation(&mut self, keys: &Vec<String>) {
         self.capability_invocation.extend_from_slice(keys)
     }
 
@@ -206,7 +202,7 @@ impl DIDDocument {
     
     /// Add a service to the document
     pub fn add_service(&mut self, services: &Vec<Service>) {
-        self.service.extend_from_slice(services); 
+        self.service.extend_from_slice(services);
     }
 
     /// Serialize to JSON

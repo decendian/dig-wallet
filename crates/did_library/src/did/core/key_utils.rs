@@ -5,15 +5,16 @@
 
 use base64::Engine;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Supported key types
 #[derive(Debug, Clone, Serialize, Deserialize, Copy)]
 pub enum KeyType {
     /// Ed25519 signatures
     Ed25519,
-    /// ECDSA with secp256k1 curve 
+    /// ECDSA with secp256k1 curve
     Secp256k1,
-    /// P-256 curve 
+    /// P-256 curve
     P256,
 }
 
@@ -25,6 +26,57 @@ pub struct PublicKey {
 
     /// Raw key bytes
     pub key_bytes: Vec<u8>,
+}
+
+/// Hash a JWK into three fields: key_type, public_key, and private_key.
+/// Note all key,value pairs are strings
+pub fn hash_jwk(jwk: &serde_json::Value) -> Result<HashMap<String, String>, String> {
+    // First, determine key type from the JWK
+    let key_type = match jwk.get("crv").and_then(|v| v.as_str()) {
+        Some("Ed25519") => KeyType::Ed25519,
+        Some("secp256k1") => KeyType::Secp256k1,
+        Some("P-256") => KeyType::P256,
+        Some(curve) => return Err(format!("The curve {} is not supported", curve)),
+        _ => return Err("The curve should be one of Ed25519, secp256k1, or P-256".into()),
+    };
+
+    let public_key = jwk
+        .get("x")
+        .ok_or_else(|| "Missing public key (x) in JWK".to_string())?
+        .as_str()
+        .ok_or_else(|| "Public key is not a string".to_string())?;
+
+    let private_key = jwk
+        .get("d")
+        .ok_or_else(|| "Missing private key (d) in JWK".to_string())?
+        .as_str()
+        .ok_or_else(|| "Private key is not a string".to_string())?;
+
+    let mut map = HashMap::new();
+    map.insert("key_type".to_string(), format!("{:?}", key_type));
+    map.insert("public_key".to_string(), public_key.to_string());
+    map.insert("private_key".to_string(), private_key.to_string());
+
+    Ok(map)
+}
+
+pub fn decode_key_type(did: &str) -> Result<KeyType, &'static str> {
+    if !did.starts_with("did:key:") {
+        return Err("Invalid DID: Must start with 'did:key:'");
+    }
+    let encoded_key = did.replace("did:key:", "");
+
+    if encoded_key.len() < 2 {
+        return Err("Invalid DID: Must be at least 2 characters long");
+    }
+    let prefix_bytes: &[u8] = &encoded_key.as_bytes()[..2];
+
+    match prefix_bytes {
+        [0xed, 0x01] => Ok(KeyType::Ed25519),
+        [0xe7, 0x01] => Ok(KeyType::Secp256k1),
+        [0x12, 0x00] => Ok(KeyType::P256),
+        _ => Err("Key Type not supported"),
+    }
 }
 
 /// A private key used for signing
@@ -53,9 +105,10 @@ impl PublicKey {
 
     /// Convert to hex representation
     pub fn to_hex(&self) -> String {
-        self.key_bytes.iter()
-          .map(|b| format!("{:02x}", b))
-          .collect()
+        self.key_bytes
+            .iter()
+            .map(|b| format!("{:02x}", b))
+            .collect()
     }
 
     /// Verify a signature against the given message
@@ -79,84 +132,84 @@ impl PublicKey {
 }
 
 impl PrivateKey {
-        /// Create a new private key
-        pub fn new(key_type: &str, key_bytes: Vec<u8>) -> Self {
-            PrivateKey {
-                key_type: key_type.to_string(),
-                key_bytes,
-            }
-        }
-
-        /// Generate a new private key of the specified type
-        pub fn generate(key_type: KeyType) -> Result<Self, &'static str> {
-            // match key_type {
-            //     KeyType::Ed25519 => {
-            //         // Generate a new Ed25519 keypair
-            //         let rng = rand::SystemRandom::new();
-            //         let pkcs8_bytes = signature::Ed25519KeyPair::generate_pkcs8(&rng)
-            //             .map_err(|_| "Failed to generate Ed25519 key")?;
-            //         
-            //         Ok(PrivateKey {
-            //             key_type: "Ed25519".to_string(),
-            //             key_bytes: pkcs8_bytes.as_ref().to_vec(),
-            //         })
-            //     },
-            //     KeyType::Secp256k1 => {
-            //         // For Secp256k1, we would use a different generation method
-            //         // This is a placeholder implementation - in a real system, use a proper secp256k1 library
-            //         let mut bytes = [0u8; 32];
-            //         let rng = rand::SystemRandom::new();
-            //         rng.fill(&mut bytes).map_err(|_| "Failed to generate random bytes")?;
-            //         
-            //         Ok(PrivateKey {
-            //             key_type: "Secp256k1".to_string(),
-            //             key_bytes: bytes.to_vec(),
-            //         })
-            //     },
-            //     KeyType::P256 => {
-            //         // For P256, this is a placeholder implementation
-            //         // In a real system, use a proper P-256 library
-            //         let mut bytes = [0u8; 32];
-            //         let rng = rand::SystemRandom::new();
-            //         rng.fill(&mut bytes).map_err(|_| "Failed to generate random bytes")?;
-            //         
-            //         Ok(PrivateKey {
-            //             key_type: "P256".to_string(),
-            //             key_bytes: bytes.to_vec(),
-            //         })
-            //     },
-            // }
-            todo!()
-        }
-
-        /// Get the corresponding public key
-        pub fn public_key(&self) -> Result<PublicKey, &'static str> {
-            // match self.key_type.as_str() {
-            //     "Ed25519" => {
-            //         let key_pair = signature::Ed25519KeyPair::from_pkcs8(&self.key_bytes)
-            //             .map_err(|_| "Invalid Ed25519 key")?;
-            // 
-            //         Ok(PublicKey {
-            //             key_type: "Ed25519".to_string(),
-            //             key_bytes: key_pair.public_key().as_ref().to_vec(),
-            //         })
-            //     },
-            //     _ => Err("Key type not implemented"),
-            // }
-            todo!()
-        }
-
-        /// Sign a message
-        pub fn sign(&self, message: &[u8]) -> Result<Vec<u8>, &'static str> {
-            // match self.key_type.as_str() {
-            //     "Ed25519" => {
-            //         let key_pair = signature::Ed25519KeyPair::from_pkcs8(&self.key_bytes)
-            //             .map_err(|_| "Invalid Ed25519 key")?;
-            // 
-            //         Ok(key_pair.sign(message).as_ref().to_vec())
-            //     },
-            //     _ => Err("Key type not implemented"),
-            // }
-            todo!()
+    /// Create a new private key
+    pub fn new(key_type: &str, key_bytes: Vec<u8>) -> Self {
+        PrivateKey {
+            key_type: key_type.to_string(),
+            key_bytes,
         }
     }
+
+    /// Generate a new private key of the specified type
+    pub fn generate(key_type: KeyType) -> Result<Self, &'static str> {
+        // match key_type {
+        //     KeyType::Ed25519 => {
+        //         // Generate a new Ed25519 keypair
+        //         let rng = rand::SystemRandom::new();
+        //         let pkcs8_bytes = signature::Ed25519KeyPair::generate_pkcs8(&rng)
+        //             .map_err(|_| "Failed to generate Ed25519 key")?;
+        //
+        //         Ok(PrivateKey {
+        //             key_type: "Ed25519".to_string(),
+        //             key_bytes: pkcs8_bytes.as_ref().to_vec(),
+        //         })
+        //     },
+        //     KeyType::Secp256k1 => {
+        //         // For Secp256k1, we would use a different generation method
+        //         // This is a placeholder implementation - in a real system, use a proper secp256k1 library
+        //         let mut bytes = [0u8; 32];
+        //         let rng = rand::SystemRandom::new();
+        //         rng.fill(&mut bytes).map_err(|_| "Failed to generate random bytes")?;
+        //
+        //         Ok(PrivateKey {
+        //             key_type: "Secp256k1".to_string(),
+        //             key_bytes: bytes.to_vec(),
+        //         })
+        //     },
+        //     KeyType::P256 => {
+        //         // For P256, this is a placeholder implementation
+        //         // In a real system, use a proper P-256 library
+        //         let mut bytes = [0u8; 32];
+        //         let rng = rand::SystemRandom::new();
+        //         rng.fill(&mut bytes).map_err(|_| "Failed to generate random bytes")?;
+        //
+        //         Ok(PrivateKey {
+        //             key_type: "P256".to_string(),
+        //             key_bytes: bytes.to_vec(),
+        //         })
+        //     },
+        // }
+        todo!()
+    }
+
+    /// Get the corresponding public key
+    pub fn public_key(&self) -> Result<PublicKey, &'static str> {
+        // match self.key_type.as_str() {
+        //     "Ed25519" => {
+        //         let key_pair = signature::Ed25519KeyPair::from_pkcs8(&self.key_bytes)
+        //             .map_err(|_| "Invalid Ed25519 key")?;
+        //
+        //         Ok(PublicKey {
+        //             key_type: "Ed25519".to_string(),
+        //             key_bytes: key_pair.public_key().as_ref().to_vec(),
+        //         })
+        //     },
+        //     _ => Err("Key type not implemented"),
+        // }
+        todo!()
+    }
+
+    /// Sign a message
+    pub fn sign(&self, message: &[u8]) -> Result<Vec<u8>, &'static str> {
+        // match self.key_type.as_str() {
+        //     "Ed25519" => {
+        //         let key_pair = signature::Ed25519KeyPair::from_pkcs8(&self.key_bytes)
+        //             .map_err(|_| "Invalid Ed25519 key")?;
+        //
+        //         Ok(key_pair.sign(message).as_ref().to_vec())
+        //     },
+        //     _ => Err("Key type not implemented"),
+        // }
+        todo!()
+    }
+}
