@@ -33,6 +33,9 @@ pub fn sign_data(data: &[u8], keypair: &Keypair) -> String {
     let hash = hasher.finalize();
 
     // Sign the hash
+    // Sign the given message and return a digital signature
+    // hash: &[u8] - The hash to sign
+    // keypair: &Keypair - The keypair to use for signing
     let signature = keypair.sign(&hash);
 
     // Encode the signature as base64

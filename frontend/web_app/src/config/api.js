@@ -8,6 +8,11 @@ export const apiConfig = {
   endpoints: {
     createDid: '/did/create',  
     issueCredential: '/credentials/issue',
+    // New presentation endpoints
+    createPresentation: '/presentations/create',
+    requestPresentation: '/presentations/request',
+    verifyPresentation: '/presentations/verify',
+    // Add other endpoints here as needed
   }
 };
 
@@ -19,3 +24,7 @@ export const getApiUrl = (endpoint) => {
 // Export specific endpoint URLs
 export const CREATE_DID_URL = getApiUrl(apiConfig.endpoints.createDid);
 export const ISSUE_CREDENTIAL_URL = getApiUrl(apiConfig.endpoints.issueCredential);
+// Export new presentation endpoint URLs
+export const CREATE_PRESENTATION_URL = getApiUrl(apiConfig.endpoints.createPresentation);
+export const REQUEST_PRESENTATION_URL = getApiUrl(apiConfig.endpoints.requestPresentation);
+export const VERIFY_PRESENTATION_URL = getApiUrl(apiConfig.endpoints.verifyPresentation);
