@@ -2,6 +2,7 @@
 members = [
     "verifiable_credentials",
     "api_server",
-    "did_library"
+    "did_library",
+    "access_control"
 ]
 resolver = "2"

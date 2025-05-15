@@ -2,9 +2,7 @@ use crate::did::core::did_document::*;
 use crate::did::core::key_utils;
 use crate::did::core::key_utils::*;
 use crate::did::core::traits::DIDMethod;
-use serde::Serialize;
 use ssi::jwk::JWK;
-use std::collections::HashMap;
 
 pub struct KeyDID;
 
