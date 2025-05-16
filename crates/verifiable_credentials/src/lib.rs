@@ -33,7 +33,6 @@ pub struct CredentialSubject {
 /// Find the project root by looking for the workspace Cargo.toml
 fn find_project_root() -> Option<PathBuf> {
     let mut current_dir = env::current_dir().ok()?;
-    
     loop {
         let cargo_toml_path = current_dir.join("Cargo.toml");
         
@@ -50,7 +49,6 @@ fn find_project_root() -> Option<PathBuf> {
             break;
         }
     }
-    
     None
 }
 
