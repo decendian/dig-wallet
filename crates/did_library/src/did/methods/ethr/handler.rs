@@ -154,6 +154,7 @@ fn verify_address_checksum(address: &str) -> bool {
 
 impl DIDMethod for EthrHandler {
     fn create_did(&self, options: DIDCreationOptions) -> DIDDocument {
+        println!("Creating ethr DID");
         let did_prefix = String::from("did:ethr:");
         
         // For ethr DID, we primarily use Secp256k1 keys (Ethereum standard)
