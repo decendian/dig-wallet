@@ -1,5 +1,4 @@
 use crate::did::core::did_document::*;
-use crate::did::core::key_utils;
 use crate::did::core::key_utils::*;
 use crate::did::core::traits::DIDMethod;
 use ssi::jwk::JWK;
@@ -32,7 +31,7 @@ impl DIDMethod for KeyDID {
         let serialize_jwk: serde_json::Value =
             serde_json::from_str(&jwk_string).expect("Failed to parse JWK");
         let key_map =
-            key_utils::hash_jwk(&serialize_jwk).expect("Failed to extract key components");
+            hash_jwk(&serialize_jwk).expect("Failed to extract key components");
         let public_key = key_map.get("public_key").expect("Missing public key");
         let key_material = did_prefix + public_key;
         let mut document = DIDDocument::new(&key_material, key_type);

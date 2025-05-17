@@ -11,6 +11,10 @@ base64 = "0.22.1"
 ssi = "=0.10.2"
 chrono = "0.4.40"
 
+# Dependencies for ethr DID method
+ethereum-types = "0.14"
+tiny-keccak = { version = "2.0", features = ["keccak"] }
+hex = "0.4"
 
 [lib]
 name = "did_library"
