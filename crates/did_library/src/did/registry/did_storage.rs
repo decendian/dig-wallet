@@ -46,8 +46,6 @@ impl DIDRegistry {
             storage.insert(did_id, did_document);
         }
         
-        println!("{:?} + <><>", self.storage);
-
         // Persist to disk if path is provided (outside the lock scope)
         if let Some(path) = &self.storage_path {
             self.save_to_disk(path)?;
