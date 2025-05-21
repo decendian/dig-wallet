@@ -5,7 +5,6 @@ pub mod presentation; // Add this line
 
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use did_library::did::core::did_document::*;
@@ -13,6 +12,7 @@ use did_library::did::core::key_utils::KeyType;
 use crate::format::VerifiableCredential;
 use std::env;
 use std::path::{PathBuf};
+use did_library::did::registry::get_registry;
 
 // Re-export important types and functions
 #[derive(Serialize, Deserialize, Clone)]
@@ -189,16 +189,12 @@ pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredenti
         capability_delegation: None,
         service: None,
     };
-    let mut did_string = String::new();
-    let registry = get_did_registry().unwrap();
-    if let Some(obj) = registry.as_object() {
-        for (did_key, document) in obj {
-            did_string = did_key.to_string();
-        }
-    }
+    let registry = get_registry().list_dids();
+    let current_did = registry?.pop();
+   
     // Create a new credential based on the request
     let mut credential = format::create_credential(
-        did_string,
+        current_did.unwrap(),
         request.subject,
         request.type_,
         request.expiration_date,

@@ -22,9 +22,9 @@ fn main() {
     };
 
     //TODO: Dynamically load and configure path for registry initialization (from .env file)
-    did_library::did::registry::init_registry(Some(
-        "did_library/resources/did_registry.json".to_string(),
-    ));
+    // did_library::did::registry::create_registry(Some(
+    //     "did_library/resources/did_registry.json".to_string(),
+    // ));
 
     let document = KeyDID.create_did(options);
 }

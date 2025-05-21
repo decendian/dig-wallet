@@ -101,23 +101,8 @@ pub struct CreateDIDResponse {
 /// TODO: Make so that it can handle/manage input from a user
 async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
 
-    // Path to the registry file
-    let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
-
-    // Check if the registry file exists and has content
-    if let Ok(metadata) = std::fs::metadata(registry_path) {
-        if metadata.len() > 0 {
-            // Registry exists and has content
-            return HttpResponse::BadRequest().json(serde_json::json!({
-                "error": "DID registry already exists. No new DID will be created."
-            }));
-        }
-    }
-
-    // If we get here, either the file doesn't exist or is empty
     // Create a new KeyDID instance
     let did_method = KeyDID::new();
-
     // Set up DID creation options
     let options = DIDCreationOptions {
         key_type: None,
@@ -130,7 +115,6 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
         service: None,
     };
 
-    did_library::did::registry::init_registry(Some(env::var("DID_REGISTRY_PATH").unwrap()));
     let document = did_method.create_did(options);
 
     // Return the DID document

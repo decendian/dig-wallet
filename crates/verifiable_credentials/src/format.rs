@@ -144,7 +144,6 @@ pub fn create_credential(
         capability_invocation: key_did.capability_invocation,
         capability_delegation: key_did.capability_delegation,
         key_agreement: key_did.key_agreement,
-        //TODO: Tie verification_method to the did_registry.json did
         verification_method: key_did.verification_method,
         service: key_did.service,
         type_: credential_types,
