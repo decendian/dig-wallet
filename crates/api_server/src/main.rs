@@ -3,6 +3,7 @@ use actix_web::{middleware, web, App, HttpResponse, HttpServer, Responder};
 use config::{Config, ConfigError, Environment, File};
 use did_library::did::core::{did_document::DIDCreationOptions, traits::DIDMethod};
 use did_library::did::methods::key::handler::KeyDID;
+use did_library::did::methods::ethr::handler::EthrHandler;
 use did_library::DIDDocument;
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
@@ -87,7 +88,9 @@ struct IssueCredentialRequest {
 #[derive(Deserialize)]
 //TODO: Implement this
 struct CreateDIDRequest {
-
+    // Optional method field, defaults to "key" if not provided
+    method: Option<String>,
+    // Add any other fields needed for DID creation
 }
 
 #[derive(Serialize, Deserialize)]
@@ -95,12 +98,7 @@ pub struct CreateDIDResponse {
     document: DIDDocument,
 }
 
-
-
-/// Handler for creating a new DID
-/// TODO: Make so that it can handle/manage input from a user
-async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
-
+async fn create_ethr_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
     // Path to the registry file
     let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
 
@@ -115,8 +113,8 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
     }
 
     // If we get here, either the file doesn't exist or is empty
-    // Create a new KeyDID instance
-    let did_method = KeyDID::new();
+    // Create a new EthrHandler instance
+    let did_method = EthrHandler::new();
 
     // Set up DID creation options
     let options = DIDCreationOptions {
@@ -135,7 +133,56 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
 
     // Return the DID document
     HttpResponse::Ok().json(document)
+}
 
+
+/// Handler for creating a new DID
+/// TODO: Make so that it can handle/manage input from a user
+async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
+    // Path to the registry file
+    let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
+
+    // Check if the registry file exists and has content
+    if let Ok(metadata) = std::fs::metadata(registry_path) {
+        if metadata.len() > 0 {
+            // Registry exists and has content
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "DID registry already exists. No new DID will be created."
+            }));
+        }
+    }
+
+    // Get the method from the request, default to "key" if not specified
+    let method = req.method.clone().unwrap_or_else(|| "key".to_string());
+
+    // Set up DID creation options (same for both methods)
+    let options = DIDCreationOptions {
+        key_type: None,
+        verification_method: None,
+        authentication: None,
+        assertion_method: None,
+        key_agreement: None,
+        capability_invocation: None,
+        capability_delegation: None,
+        service: None,
+    };
+
+    did_library::did::registry::init_registry(Some(env::var("DID_REGISTRY_PATH").unwrap()));
+    
+    // Create the document based on the selected method
+    let document = match method.as_str() {
+        "ethr" => {
+            let did_method = EthrHandler::new();
+            did_method.create_did(options)
+        },
+        _ => { // Default to "key" method
+            let did_method = KeyDID::new();
+            did_method.create_did(options)
+        }
+    };
+
+    // Return the DID document
+    HttpResponse::Ok().json(document)
 }
 
 async fn issue_credential_handler(req: web::Json<IssueCredentialRequest>) -> impl Responder {
@@ -288,7 +335,11 @@ async fn main() -> std::io::Result<()> {
                             .route("/request", web::post().to(create_presentation_request_handler))
                             .route("/verify", web::post().to(verify_presentation_handler))
                     )
-                  .service(web::scope("/did").route("/create", web::post().to(create_did_handler))),
+                    .service(web::scope("/did")
+                        .route("/create", web::post().to(create_did_handler))
+                        //edicated route for ethr DIDs for backwards compatibility
+                        .route("/create/ethr", web::post().to(create_ethr_did_handler))
+                    ),
             )
     })
     .bind((config.host, config.port))?
