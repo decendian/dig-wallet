@@ -8,6 +8,7 @@ use ssi::jwk::JWK;
 use ethereum_types::H160;
 use tiny_keccak::{Hasher, Keccak};
 use hex;
+use base64;
 
 pub struct EthrHandler;
 
@@ -17,37 +18,44 @@ impl EthrHandler {
     }
 }
 
-// Helper function to derive Ethereum address from public key
-fn derive_ethereum_address_from_public_key(public_key_hex: &str) -> Result<String, &'static str> {
-    // Remove any prefix (0x) and decode hex
-    let public_key_hex = public_key_hex.strip_prefix("0x").unwrap_or(public_key_hex);
-    let public_key_bytes = hex::decode(public_key_hex)
-        .map_err(|_| "Invalid public key hex encoding")?;
-    
-    // For secp256k1, we expect 64 bytes (32 bytes x + 32 bytes y, uncompressed without 0x04 prefix)
-    // If it includes the 0x04 prefix, remove it
-    let key_bytes = if public_key_bytes.len() == 65 && public_key_bytes[0] == 0x04 {
-        &public_key_bytes[1..]
-    } else if public_key_bytes.len() == 64 {
-        &public_key_bytes
-    } else {
-        return Err("Invalid public key length for secp256k1");
-    };
-    
-    // Perform Keccak-256 hash
-    let mut hasher = Keccak::v256();
-    hasher.update(key_bytes);
+// This function correctly derives an Ethereum address from a secp256k1 public key
+fn derive_ethereum_address(public_key: &[u8]) -> Result<String, &'static str> {
+    // Ensure we have a valid public key - uncompressed secp256k1 public key is 65 bytes
+    // (It should start with 0x04 followed by the x and y coordinates, each 32 bytes)
+    if public_key.len() < 65 || public_key[0] != 0x04 {
+        return Err("Invalid public key format for Ethereum address derivation");
+    }
+
+    // Remove the 0x04 prefix - we only hash the x and y coordinates
+    let key_without_prefix = &public_key[1..];
+
+    // Calculate Keccak-256 hash of the public key (without the prefix)
+    let mut keccak = Keccak::v256();
     let mut hash = [0u8; 32];
-    hasher.finalize(&mut hash);
+    keccak.update(key_without_prefix);
+    keccak.finalize(&mut hash);
+
+    // Take the last 20 bytes of the hash for the Ethereum address
+    let eth_address = &hash[12..32];
     
-    // Take last 20 bytes as Ethereum address
-    let address_bytes = &hash[12..];
-    let address = H160::from_slice(address_bytes);
+    // Format as hex string with 0x prefix
+    let address_hex = format!("0x{}", hex::encode(eth_address));
     
-    // Apply EIP-55 checksumming
-    let checksummed_address = checksum_address(&address);
+    Ok(address_hex.to_lowercase())
+}
+
+
+fn decode_base64url(input: &str) -> Result<Vec<u8>, base64::DecodeError> {
+    // Convert base64url to base64 by replacing URL-safe characters
+    let mut base64_string = input.replace('-', "+").replace('_', "/");
     
-    Ok(checksummed_address)
+    // Add proper padding if needed
+    let padding_needed = (4 - (base64_string.len() % 4)) % 4;
+    for _ in 0..padding_needed {
+        base64_string.push('=');
+    }
+    
+    base64::decode(&base64_string)
 }
 
 // Helper function to apply EIP-55 checksumming to Ethereum address
@@ -164,23 +172,71 @@ impl DIDMethod for EthrHandler {
         let jwk_string = match key_type {
             KeyType::Secp256k1 => JWK::generate_secp256k1(),
             // For ethr, we should primarily use secp256k1, but allow other types
-            KeyType::Ed25519 => JWK::generate_ed25519().expect("Failed to generate Ed25519 key"),
-            KeyType::P256 => JWK::generate_p256(),
+            KeyType::Ed25519 => {
+                println!("Warning: Using Ed25519 with ethr DID is non-standard");
+                JWK::generate_ed25519().expect("Failed to generate Ed25519 key")
+            },
+            KeyType::P256 => {
+                println!("Warning: Using P256 with ethr DID is non-standard");
+                JWK::generate_p256()
+            },
         }
         .to_string();
 
         let serialize_jwk: serde_json::Value =
             serde_json::from_str(&jwk_string).expect("Failed to parse JWK");
+        
+        // Extract key info using hash_jwk function
         let key_map = hash_jwk(&serialize_jwk).expect("Failed to extract key components");
         let public_key = key_map.get("public_key").expect("Missing public key");
         
-        // For ethr DID, we need to derive an Ethereum address from the public key
-        let ethereum_address = derive_ethereum_address_from_public_key(public_key)
-            .expect("Failed to derive Ethereum address");
+        // For Ethereum address derivation, we still need raw public key bytes
+        // Extract x and y coordinates directly from JWK for secp256k1 keys
+        let ethereum_address = match key_type {
+            KeyType::Secp256k1 => {
+                // Extract x and y coordinates from JWK
+                let x_coord = serialize_jwk.get("x")
+                    .and_then(|v| v.as_str())
+                    .expect("Missing x coordinate in JWK");
+                let y_coord = serialize_jwk.get("y")
+                    .and_then(|v| v.as_str())
+                    .expect("Missing y coordinate in JWK");
+                
+                // Decode base64url encoded coordinates with proper padding
+                let x_bytes = decode_base64url(x_coord)
+                    .expect("Failed to decode x coordinate");
+                let y_bytes = decode_base64url(y_coord)
+                    .expect("Failed to decode y coordinate");
+                
+                // Create uncompressed public key format: 0x04 + x + y
+                let mut public_key_bytes = Vec::with_capacity(65);
+                public_key_bytes.push(0x04); // Uncompressed point format
+                public_key_bytes.extend_from_slice(&x_bytes);
+                public_key_bytes.extend_from_slice(&y_bytes);
+                
+                // Derive Ethereum address from public key
+                derive_ethereum_address(&public_key_bytes)
+                    .expect("Failed to derive Ethereum address")
+            },
+            _ => {
+                // For non-secp256k1 keys, create a placeholder address
+                // In practice, ethr DID should primarily use secp256k1
+                format!("0x{}", hex::encode(&public_key.as_bytes()[..20]))
+            }
+        };
         
-        // Build the complete DID identifier
-        // Default to mainnet if no network specified
-        let did_identifier = format!("{}{}", did_prefix, ethereum_address);
+        // Build the complete DID identifier with the Ethereum address
+        // Apply EIP-55 checksumming to the address
+        let checksummed_address = if ethereum_address.starts_with("0x") {
+            let h160_addr = ethereum_address[2..].parse::<H160>()
+                .expect("Failed to parse Ethereum address");
+            checksum_address(&h160_addr)
+        } else {
+            ethereum_address
+        };
+        
+        // Remove 0x prefix for DID identifier
+        let did_identifier = format!("{}{}", did_prefix, checksummed_address.trim_start_matches("0x"));
         
         let mut document = DIDDocument::new(&did_identifier, key_type);
 
@@ -188,7 +244,7 @@ impl DIDMethod for EthrHandler {
         if options.verification_method.is_none() {
             // Create a verification method from the Ethereum address
             let vm_type: &str = match key_type {
-                KeyType::Secp256k1 => "EcdsaSecp256k1VerificationKey2019",
+                KeyType::Secp256k1 => "EcdsaSecp256k1RecoveryMethod2020", // Ethereum standard
                 KeyType::Ed25519 => "Ed25519VerificationKey2020", 
                 KeyType::P256 => "P256VerificationKey2021",
             };
