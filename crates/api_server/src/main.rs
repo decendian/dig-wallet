@@ -128,7 +128,6 @@ async fn create_ethr_did_handler(req: web::Json<CreateDIDRequest>) -> impl Respo
         service: None,
     };
 
-    did_library::did::registry::init_registry(Some(env::var("DID_REGISTRY_PATH").unwrap()));
     let document = did_method.create_did(options);
 
     // Return the DID document

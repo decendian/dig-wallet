@@ -1,7 +1,9 @@
+use std::env;
 use crate::did::core::did_document::*;
 use crate::did::core::key_utils::*;
 use crate::did::core::traits::DIDMethod;
 use ssi::jwk::JWK;
+// use crate::did::core::key_utils;
 
 pub struct KeyDID;
 
@@ -30,8 +32,7 @@ impl DIDMethod for KeyDID {
 
         let serialize_jwk: serde_json::Value =
             serde_json::from_str(&jwk_string).expect("Failed to parse JWK");
-        let key_map =
-            hash_jwk(&serialize_jwk).expect("Failed to extract key components");
+        let key_map = hash_jwk(&serialize_jwk).expect("Failed to extract key components");
         let public_key = key_map.get("public_key").expect("Missing public key");
         let key_material = did_prefix + public_key;
         let mut document = DIDDocument::new(&key_material, key_type);
@@ -80,7 +81,13 @@ impl DIDMethod for KeyDID {
         if let Some(services) = options.service {
             document.add_service(&services);
         }
-        // Store the created document in the registry
+        // Initialize the storage solutions and store the created document
+        let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
+        crate::did::registry::init_registry(Some(registry_path));
+        
+        let current_did_path = env::var("CURRENT_DID_PATH").unwrap();
+        crate::did::registry::init_registry(Some(current_did_path));
+        
         if let Err(err) = crate::did::registry::get_registry().store(document.clone()) {
             // Log error but continue - the document is still valid
             eprintln!("Failed to store DID in registry: {}", err);
