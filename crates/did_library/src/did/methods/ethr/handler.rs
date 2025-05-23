@@ -139,13 +139,11 @@ fn validate_ethereum_address(address: &str) -> Result<(), &'static str> {
         return Err("Invalid Ethereum address: contains non-hexadecimal characters");
     }
     
-    // Optionally validate EIP-55 checksum (current implementation accepts both)
-    // For strict validation, you could add checksum verification here
     
     Ok(())
 }
 
-// Helper function to verify EIP-55 checksum (optional, for strict validation)
+// Helper function to verify EIP-55 checksum, for strict validation
 fn verify_address_checksum(address: &str) -> bool {
     if address.len() != 42 || !address.starts_with("0x") {
         return false;
