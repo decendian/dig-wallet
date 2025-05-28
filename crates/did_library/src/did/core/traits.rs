@@ -8,4 +8,5 @@ pub trait DIDMethod {
         did: &str,
         option: DIDCreationOptions,
     ) -> Result<DIDDocument, &'static str>;
+    fn invalidate_did(&self, did: &str) -> Result<DIDDocument, &'static str>;
 }

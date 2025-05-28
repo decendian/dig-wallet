@@ -11,6 +11,7 @@ base64 = "0.22.1"
 ssi = "=0.10.2"
 chrono = "0.4.40"
 indexmap = "2.2.0"  # Use the latest version
+bs58 = "0.5"
 
 
 [lib]

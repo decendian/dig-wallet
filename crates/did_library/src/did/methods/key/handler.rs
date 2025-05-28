@@ -85,9 +85,6 @@ impl DIDMethod for KeyDID {
         let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
         crate::did::registry::init_registry(Some(registry_path));
         
-        let current_did_path = env::var("CURRENT_DID_PATH").unwrap();
-        crate::did::registry::init_registry(Some(current_did_path));
-        
         if let Err(err) = crate::did::registry::get_registry().store(document.clone()) {
             // Log error but continue - the document is still valid
             eprintln!("Failed to store DID in registry: {}", err);
@@ -152,6 +149,39 @@ impl DIDMethod for KeyDID {
 
         if let Some(services) = options.service {
             document.add_service(&services);
+        }
+
+        Ok(document)
+    }
+
+        /**
+     * Invalidates (deactivates) an existing DID
+     */
+    fn invalidate_did(&self, did: &str) -> Result<DIDDocument, &'static str> {
+        // Validate DID format
+        if !did.starts_with("did:key:") {
+            return Err("Invalid DID: Must start with 'did:key:'");
+        }
+
+        // Resolve existing document
+        let mut document = self.resolve_did(did)?;
+
+        // Check if already inactive
+        if document.status != "active" {
+            return Err("DID is already inactive");
+        }
+
+        // Change status to deactivated
+        document.status = "deactivated".to_string();
+
+        // Store the updated document
+        let registry_path = env::var("DID_REGISTRY_PATH")
+            .unwrap_or_else(|_| "./did_registry".to_string());
+        crate::did::registry::init_registry(Some(registry_path));
+        
+        if let Err(err) = crate::did::registry::get_registry().store(document.clone()) {
+            eprintln!("Failed to store deactivated DID in registry: {}", err);
+            return Err("Failed to store deactivated DID");
         }
 
         Ok(document)

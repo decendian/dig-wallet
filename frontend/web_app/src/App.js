@@ -20,6 +20,9 @@ function App() {
   const [presentation, setPresentation] = useState(null);
   const [verificationResult, setVerificationResult] = useState(null);
 
+  const [invalidateDid, setInvalidateDid] = useState("");
+  const [invalidationResult, setInvalidationResult] = useState(null);
+
   /**
    * createDid simulates the creation of a Decentralized Identifier.
    */
@@ -60,6 +63,42 @@ function App() {
       // setError(error.message);
     }
   };
+
+  const invalidateDidHandler = async () => {
+  try {
+    if (!invalidateDid) {
+      alert('Please enter a DID to invalidate');
+      return;
+    }
+
+    const encodedDid = encodeURIComponent(invalidateDid);
+    const response = await fetch(`http://localhost:8080/api/did/${encodedDid}/invalidate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to invalidate DID');
+    }
+
+    const result = await response.json();
+    setInvalidationResult(result);
+    console.log("Invalidation Result:", result);
+
+    if (result.success) {
+      alert('DID invalidated successfully!');
+    } else {
+      alert(`Failed to invalidate DID: ${result.message}`);
+    }
+
+  } catch (error) {
+    console.error("Error invalidating DID:", error);
+    alert(`Error: ${error.message}`);
+  }
+};
 
   /**
    * Issues a Verifiable Credential by calling the backend API
@@ -259,10 +298,38 @@ function App() {
               <pre> {JSON.stringify(did, null, 2)} </pre>
             </div>}
       </div>
-      
-      {/* Section 2: Credential Issuance */}
+
+      {/* Section 2: DID Invalidation */}
       <div className="section">
-        <h2>2. Issue Verifiable Credential (VC)</h2>
+        <h2>2. Invalidate DID</h2>
+        <input
+          type="text"
+          placeholder="Enter DID to invalidate (e.g., did:key:z6Mk...)"
+          value={invalidateDid}
+          onChange={(e) => setInvalidateDid(e.target.value)}
+          style={{ width: '400px', padding: '8px', marginRight: '10px' }}
+        />
+        <button onClick={invalidateDidHandler} style={{ backgroundColor: '#ff6b6b' }}>
+          Invalidate DID
+        </button>
+        
+        {invalidationResult && (
+          <div style={{ marginTop: '15px' }}>
+            <p>Invalidation Result:</p>
+            <pre style={{ 
+              backgroundColor: invalidationResult.success ? '#d4edda' : '#f8d7da',
+              padding: '10px',
+              borderRadius: '4px'
+            }}>
+              {JSON.stringify(invalidationResult, null, 2)}
+            </pre>
+          </div>
+        )}
+      </div>
+      
+      {/* Section 3: Credential Issuance */}
+      <div className="section">
+        <h2>3. Issue Verifiable Credential (VC)</h2>
         <button onClick={issueCredential}>Issue Credential</button>
         {vc && (
           <div>
@@ -274,7 +341,7 @@ function App() {
       
       {/* New Section: Presentation Request */}
       <div className="section">
-        <h2>3. Create Presentation Request (Verifier)</h2>
+        <h2>4. Create Presentation Request (Verifier)</h2>
         <button onClick={createPresentationRequest}>Create Request</button>
         {presentationRequest && (
           <div>
@@ -286,7 +353,7 @@ function App() {
       
       {/* New Section: Create Presentation */}
       <div className="section">
-        <h2>4. Create Presentation (Holder)</h2>
+        <h2>5. Create Presentation (Holder)</h2>
         <button onClick={createPresentation}>Create Presentation</button>
         {presentation && (
           <div>
@@ -298,7 +365,7 @@ function App() {
       
       {/* New Section: Verify Presentation */}
       <div className="section">
-        <h2>5. Verify Presentation (Verifier)</h2>
+        <h2>6. Verify Presentation (Verifier)</h2>
         <button onClick={verifyPresentation}>Verify Presentation</button>
         {verificationResult && (
           <div>
@@ -310,7 +377,7 @@ function App() {
       
       {/* Section: Age Verification */}
       <div className="section">
-        <h2>6. Age Verification (ZKP Stub)</h2>
+        <h2>7. Age Verification (ZKP Stub)</h2>
         <input
           type="number"
           placeholder="Enter your age"

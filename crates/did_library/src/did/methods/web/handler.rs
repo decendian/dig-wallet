@@ -27,4 +27,8 @@ impl DIDMethod for Web {
     ) -> Result<DIDDocument, &'static str> {
         todo!()
     }
+	
+	fn invalidate_did(&self, did: &str) -> Result<DIDDocument, &'static str> {
+		todo!()
+	}
 }

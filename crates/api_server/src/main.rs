@@ -36,6 +36,13 @@ struct ServerConfig {
     port: u16,
 }
 
+#[derive(Serialize)]
+struct DIDOperationResponse {
+    success: bool,
+    message: String,
+    document: Option<DIDDocument>,
+}
+
 impl Default for ServerConfig {
     fn default() -> Self {
         Self {
@@ -120,6 +127,27 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
     // Return the DID document
     HttpResponse::Ok().json(document)
 
+}
+
+/// Handler for invalidating a DID
+async fn invalidate_did_handler(path: web::Path<String>) -> impl Responder {
+    let did = path.into_inner();
+    
+    // Create a new KeyDID instance
+    let did_method = KeyDID::new();
+    
+    match did_method.invalidate_did(&did) {
+        Ok(document) => HttpResponse::Ok().json(DIDOperationResponse {
+            success: true,
+            message: "DID successfully invalidated".to_string(),
+            document: Some(document),
+        }),
+        Err(error) => HttpResponse::BadRequest().json(DIDOperationResponse {
+            success: false,
+            message: error.to_string(),
+            document: None,
+        }),
+    }
 }
 
 async fn issue_credential_handler(req: web::Json<IssueCredentialRequest>) -> impl Responder {
@@ -272,7 +300,11 @@ async fn main() -> std::io::Result<()> {
                             .route("/request", web::post().to(create_presentation_request_handler))
                             .route("/verify", web::post().to(verify_presentation_handler))
                     )
-                  .service(web::scope("/did").route("/create", web::post().to(create_did_handler))),
+                    .service(
+                        web::scope("/did")
+                            .route("/create", web::post().to(create_did_handler))
+                            .route("/{did}/invalidate", web::post().to(invalidate_did_handler))
+                    ),
             )
     })
     .bind((config.host, config.port))?
