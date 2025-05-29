@@ -14,6 +14,43 @@ impl KeyDID {
     }
 }
 
+/*
+ * Helper function to reconstruct a did:key document from the DID string
+ */
+fn resolve_did_key(did: &str) -> Result<DIDDocument, &'static str> {
+    let key_type = decode_key_type(did)?;
+    
+    // Extract the public key from the DID
+    let public_key = did.replace("did:key:", "");
+    
+    // Create a new document with the key type
+    let mut document = DIDDocument::new(did, key_type);
+    
+    // Create verification method based on key type
+    let vm_type = match key_type {
+        KeyType::Ed25519 => "Ed25519VerificationKey2020",
+        KeyType::Secp256k1 => "EcdsaSecp256k1VerificationKey2019", 
+        KeyType::P256 => "P256VerificationKey2021",
+    };
+    
+    let method = VerificationMethod {
+        id: format!("#{}", did),
+        vm_type: vm_type.to_string(),
+        controller: did.to_string(),
+        key_material: KeyMaterial::Multibase {
+            public_key_multibase: public_key,
+        },
+    };
+    
+    // Add the verification method
+    document.add_verification_method(&vec![method]);
+    
+    // Add default authentication capability - reference to the verification method
+    document.add_authentication(&vec![Authentication::Reference(format!("#{}", did))]);
+    
+    Ok(document)
+}
+
 /// Implementation of DIDMethod trait for KeyDID
 impl DIDMethod for KeyDID {
     /**
@@ -93,19 +130,37 @@ impl DIDMethod for KeyDID {
     }
 
     /*
-    	* Retrieves the current DID Document for an existing DID
-    	*/
+    * Retrieves the current DID Document for an existing DID
+    */
     fn resolve_did(&self, did: &str) -> Result<DIDDocument, &'static str> {
-        if !did.starts_with("did:key:") {
-            return Err("Invalid DID: Must start with 'did:key:'");
+        // Validate DID format - support key, ethr, and web methods
+        if !did.starts_with("did:") {
+            return Err("Invalid DID: Must start with 'did:'");
         }
-        let key_type = decode_key_type(did);
 
-        match key_type {
-            Ok(key_type) => Ok(DIDDocument::new(did, key_type)),
-            Err(err) => Err(err.into()),
+        let method = did.split(':').nth(1).unwrap_or("");
+        match method {
+            "key" | "ethr" | "web" => {},
+            _ => return Err("Invalid DID: Method must be 'key', 'ethr', or 'web'"),
         }
+
+        // First, try to retrieve from registry
+        let registry_path = env::var("DID_REGISTRY_PATH").unwrap_or_default();
+        crate::did::registry::init_registry(Some(registry_path));
+        
+        if let Ok(Some(stored_document)) = crate::did::registry::get_registry().get(did) {
+            return Ok(stored_document);
+        }
+
+        // If not found in registry, reconstruct from DID string (for did:key method)
+        if method == "key" {
+            return resolve_did_key(did);
+        }
+
+        // For ethr and web methods, we need the registry since they can't be reconstructed
+        Err("DID not found in registry and cannot be reconstructed")
     }
+
 
     /*
     	* Modifies an existing DID Document (adding keys, rotating keys, changing services, etc.).
