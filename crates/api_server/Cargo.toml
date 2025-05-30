@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 verifiable_credentials = { path = "../verifiable_credentials" }
 did_library = { path = "../did_library" }
+shared = { path = "../shared" }
 actix-web = "4.3.1"
 actix-cors = "0.6.4"
 serde = { version = "1.0", features = ["derive"] }
@@ -13,4 +14,5 @@ serde_json = "1.0"
 env_logger = "0.10.0"
 # New dependencies for configuration management
 dotenv = "0.15.0"  # For loading .env files
-config = "0.13.1"  # For more advanced configuration management
+config = "0.13.1"
+log = "0.4.27"  # For more advanced configuration management

@@ -14,7 +14,7 @@ impl DIDMethod for EthrHandler {
     fn create_did(&self, options: DIDCreationOptions) -> DIDDocument {
         todo!()
     }
-
+    
     fn resolve_did(&self, did: &str) -> Result<DIDDocument, &'static str> {
         todo!()
     }

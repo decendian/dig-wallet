@@ -1,12 +1,15 @@
 import React, { useState } from "react";
-import { 
-  ISSUE_CREDENTIAL_URL, 
+import {
+  ISSUE_CREDENTIAL_URL,
   CREATE_PRESENTATION_URL,
-  REQUEST_PRESENTATION_URL, 
+  REQUEST_PRESENTATION_URL,
   VERIFY_PRESENTATION_URL,
-  CREATE_DID_URL 
+  CREATE_DID_URL
 } from './config/api';
 import "./App.css";
+import { createDidRequest, validateDidRequest } from './dto/request/CreateDidReq';
+import { deserializeDidResponse, getDidString } from './dto/response/CreateDidResp';
+import AppUI from './components/AppUI';
 
 function App() {
   const [did, setDid] = useState("");
@@ -14,7 +17,7 @@ function App() {
   const [age, setAge] = useState("");
   const [error, setError] = useState(null);
 
-  
+
   // New state for presentation exchange
   const [presentationRequest, setPresentationRequest] = useState(null);
   const [presentation, setPresentation] = useState(null);
@@ -25,39 +28,44 @@ function App() {
    */
   const createDid = async () => {
     try {
-      // Optional: Add loading state
-      // setIsLoading(true);
+      // Create the request DTO
+      const requestDto = createDidRequest(
+          'ethr',  // Default method
+          'Ed25519', // Default key type
+          { network: 'testnet' } // Optional parameters
+      );
 
-      // Call your backend API
+      // Validate the request
+      if (!validateDidRequest(requestDto)) {
+        throw new Error("Invalid DID request parameters");
+      }
+
+      // Call your backend API with the properly formatted request
       const response = await fetch(CREATE_DID_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          // Optional: Include any parameters your backend needs
-          // For example, you might want to specify key_type
-          keyType: 'Ed25519',  // or 'Secp256k1' or 'P256'
-        }),
+        body: JSON.stringify(requestDto),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create DID');
       }
 
-      // Parse the response
-      const did = await response.json();
+      // Parse the response using the response DTO utilities
+      const responseText = await response.text();
+      const didResponse = deserializeDidResponse(responseText);
 
-      // Based on your backend handler.rs, the response should contain a DIDDocument
-      // Extract the 'id' field which contains the DID
-      // Update state
-      setDid(did);
-      console.log("Created DID:", did);
+      // Update state with the complete DID document
+      setDid(didResponse);
+      console.log("Created DID:", didResponse);
+      console.log("DID Identifier:", getDidString(didResponse));
 
     } catch (error) {
       console.error("Error creating DID:", error);
-      // Optional: set error state
-      // setError(error.message);
+      setError(error.message);
     }
   };
 
@@ -74,7 +82,7 @@ function App() {
           name: 'Bachelor of Science in Computer Science'
         }
       };
-      
+
       const response = await fetch(ISSUE_CREDENTIAL_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,16 +93,16 @@ function App() {
           expiration_date: null
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to issue credential');
       }
-      
+
       const credential = await response.json();
       setVc(credential);
       console.log("Issued Credential:", credential);
-      
+
     } catch (error) {
       console.error("Error issuing credential:", error);
     }
@@ -117,16 +125,16 @@ function App() {
           purpose: 'Verification of university degree'
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to create presentation request');
       }
-      
+
       const request = await response.json();
       setPresentationRequest(request);
       console.log("Created Presentation Request:", request);
-      
+
     } catch (error) {
       console.error("Error creating presentation request:", error);
     }
@@ -141,15 +149,15 @@ function App() {
         alert('Please issue a credential first');
         return;
       }
-      
+
       if (!presentationRequest) {
         alert('Please create a presentation request first');
         return;
       }
-      
+
       // Extract just the DID string from the DID document
-      const holderDidString = did ? did.id : 'did:example:holder';
-      
+      const holderDidString = did ? getDidString(did) : 'did:example:holder';
+
       const response = await fetch(CREATE_PRESENTATION_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -160,14 +168,14 @@ function App() {
           domain: presentationRequest.domain
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to create presentation');
       }
-      
+
       const vp = await response.json();
-      
+
       // Create a presentation response that includes both the VP and submission metadata
       // This would normally be done by your wallet application
       const presentationSubmission = {
@@ -181,15 +189,15 @@ function App() {
           }
         ]
       };
-      
+
       const presentationResponse = {
         verifiable_presentation: vp,
         presentation_submission: presentationSubmission
       };
-      
+
       setPresentation(presentationResponse);
       console.log("Created Presentation:", presentationResponse);
-      
+
     } catch (error) {
       console.error("Error creating presentation:", error);
     }
@@ -204,7 +212,7 @@ function App() {
         alert('Please create both a presentation request and a presentation first');
         return;
       }
-      
+
       const response = await fetch(VERIFY_PRESENTATION_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -213,22 +221,22 @@ function App() {
           presentation_response: presentation
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to verify presentation');
       }
-      
+
       const result = await response.json();
       setVerificationResult(result);
       console.log("Verification Result:", result);
-      
+
       if (result.is_valid) {
         alert('Presentation verified successfully!');
       } else {
         alert('Presentation verification failed');
       }
-      
+
     } catch (error) {
       console.error("Error verifying presentation:", error);
     }
@@ -245,93 +253,23 @@ function App() {
     }
   };
 
+  // Return the UI component with all necessary props
   return (
-    <div className="App">
-      <h1>Decentralized Identity Guardian MVP</h1>
-      
-      {/* Section 1: DID Creation */}
-      <div className="section">
-        <h2>1. Create Decentralized Identifier (DID)</h2>
-        <button onClick={createDid}>Create DID</button>
-        {did &&
-            <div>
-              <p>Your DID:</p>
-              <pre> {JSON.stringify(did, null, 2)} </pre>
-            </div>}
-      </div>
-      
-      {/* Section 2: Credential Issuance */}
-      <div className="section">
-        <h2>2. Issue Verifiable Credential (VC)</h2>
-        <button onClick={issueCredential}>Issue Credential</button>
-        {vc && (
-          <div>
-            <p>Your VC:</p>
-            <pre>{JSON.stringify(vc, null, 2)}</pre>
-          </div>
-        )}
-      </div>
-      
-      {/* New Section: Presentation Request */}
-      <div className="section">
-        <h2>3. Create Presentation Request (Verifier)</h2>
-        <button onClick={createPresentationRequest}>Create Request</button>
-        {presentationRequest && (
-          <div>
-            <p>Presentation Request:</p>
-            <pre>{JSON.stringify(presentationRequest, null, 2)}</pre>
-          </div>
-        )}
-      </div>
-      
-      {/* New Section: Create Presentation */}
-      <div className="section">
-        <h2>4. Create Presentation (Holder)</h2>
-        <button onClick={createPresentation}>Create Presentation</button>
-        {presentation && (
-          <div>
-            <p>Your Presentation:</p>
-            <pre>{JSON.stringify(presentation, null, 2)}</pre>
-          </div>
-        )}
-      </div>
-      
-      {/* New Section: Verify Presentation */}
-      <div className="section">
-        <h2>5. Verify Presentation (Verifier)</h2>
-        <button onClick={verifyPresentation}>Verify Presentation</button>
-        {verificationResult && (
-          <div>
-            <p>Verification Result:</p>
-            <pre>{JSON.stringify(verificationResult, null, 2)}</pre>
-          </div>
-        )}
-      </div>
-      
-      {/* Section: Age Verification */}
-      <div className="section">
-        <h2>6. Age Verification (ZKP Stub)</h2>
-        <input
-          type="number"
-          placeholder="Enter your age"
-          value={age}
-          onChange={(e) => setAge(e.target.value)}
-        />
-        <button onClick={verifyAge}>Verify Age</button>
-      </div>
-      
-      {/* Info section */}
-      <div className="section">
-        <p>
-          Note: This application demonstrates the full DID presentation exchange flow:
-          1. Create a DID
-          2. Issue a Verifiable Credential
-          3. Request a Presentation (verifier)
-          4. Create a Presentation (holder)
-          5. Verify the Presentation (verifier)
-        </p>
-      </div>
-    </div>
+      <AppUI
+          did={did}
+          vc={vc}
+          age={age}
+          presentationRequest={presentationRequest}
+          presentation={presentation}
+          verificationResult={verificationResult}
+          createDid={createDid}
+          issueCredential={issueCredential}
+          createPresentationRequest={createPresentationRequest}
+          createPresentation={createPresentation}
+          verifyPresentation={verifyPresentation}
+          verifyAge={verifyAge}
+          setAge={setAge}
+      />
   );
 }
 

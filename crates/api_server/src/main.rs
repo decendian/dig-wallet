@@ -1,3 +1,6 @@
+mod api;
+mod dto;
+
 use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer, Responder};
 use config::{Config, ConfigError, Environment, File};
@@ -8,6 +11,7 @@ use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 use std::env;
 use verifiable_credentials::{self, CredentialRequest, CredentialSubject};
+use crate::dto::request::CreateDidRequestDTO;
 
 #[derive(Deserialize)]
 struct CreatePresentationRequest {
@@ -95,11 +99,9 @@ pub struct CreateDIDResponse {
     document: DIDDocument,
 }
 
-
-
 /// Handler for creating a new DID
 /// TODO: Make so that it can handle/manage input from a user
-async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
+async fn create_did_handler(req: CreateDidRequestDTO) -> impl Responder {
 
     // Create a new KeyDID instance
     let did_method = KeyDID::new();
@@ -116,10 +118,8 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
     };
 
     let document = did_method.create_did(options);
-
     // Return the DID document
     HttpResponse::Ok().json(document)
-
 }
 
 async fn issue_credential_handler(req: web::Json<IssueCredentialRequest>) -> impl Responder {
@@ -233,14 +233,18 @@ async fn verify_presentation_handler(
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // Load .env file if it exists
-    dotenv().ok();
 
-    // Set up logging
-    if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "debug");
+    //TODO: Look into logging
+    if let Ok(log_level) = env::var("RUST_LOG") {
+        // RUST_LOG is set, use it
+        env_logger::init();
+    } else {
+        // RUST_LOG is not set, use default level
+        env_logger::Builder::new()
+          .filter_level(log::LevelFilter::Debug)
+          .init();
     }
-    env_logger::init();
+
 
     // Load configuration
     let config = load_config().unwrap_or_else(|e| {
