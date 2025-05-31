@@ -162,6 +162,7 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
 
     // Return the DID document
     HttpResponse::Ok().json(document)
+
 }
 
 /// Handler for invalidating a DID
