@@ -9,6 +9,7 @@ import {
 import "./App.css";
 
 function App() {
+  const [didMethod, setDidMethod] = useState("key");
   const [did, setDid] = useState("");
   const [vc, setVc] = useState("");
   const [age, setAge] = useState("");
@@ -24,7 +25,7 @@ function App() {
    * createDid simulates the creation of a Decentralized Identifier.
    */
   const createDid = async () => {
-    try {
+  try {
       // Optional: Add loading state
       // setIsLoading(true);
 
@@ -35,14 +36,16 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          // Optional: Include any parameters your backend needs
-          // For example, you might want to specify key_type
+          // Include the selected method in the request
+          method: didMethod,
+          // Optional: Include any other parameters your backend needs
           keyType: 'Ed25519',  // or 'Secp256k1' or 'P256'
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create DID');
       }
 
       // Parse the response
@@ -56,8 +59,7 @@ function App() {
 
     } catch (error) {
       console.error("Error creating DID:", error);
-      // Optional: set error state
-      // setError(error.message);
+      setError(error.message);
     }
   };
 
@@ -252,12 +254,25 @@ function App() {
       {/* Section 1: DID Creation */}
       <div className="section">
         <h2>1. Create Decentralized Identifier (DID)</h2>
+        <div className="method-selector">
+          <label>
+            DID Method:
+            <select 
+              value={didMethod} 
+              onChange={(e) => setDidMethod(e.target.value)}
+            >
+              <option value="key">Key DID</option>
+              <option value="ethr">Ethr DID</option>
+            </select>
+          </label>
+        </div>
         <button onClick={createDid}>Create DID</button>
         {did &&
-            <div>
-              <p>Your DID:</p>
-              <pre> {JSON.stringify(did, null, 2)} </pre>
-            </div>}
+          <div>
+            <p>Your DID:</p>
+            <pre>{JSON.stringify(did, null, 2)}</pre>
+          </div>
+        }
       </div>
       
       {/* Section 2: Credential Issuance */}
