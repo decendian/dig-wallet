@@ -84,10 +84,7 @@ impl DIDMethod for KeyDID {
         // Initialize the storage solutions and store the created document
         let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
         crate::did::registry::init_registry(Some(registry_path));
-        
-        let current_did_path = env::var("CURRENT_DID_PATH").unwrap();
-        crate::did::registry::init_registry(Some(current_did_path));
-        
+               
         if let Err(err) = crate::did::registry::get_registry().store(document.clone()) {
             // Log error but continue - the document is still valid
             eprintln!("Failed to store DID in registry: {}", err);

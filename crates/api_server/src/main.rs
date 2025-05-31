@@ -105,16 +105,6 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
     // Path to the registry file
     let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
 
-    // Check if the registry file exists and has content
-    if let Ok(metadata) = std::fs::metadata(registry_path) {
-        if metadata.len() > 0 {
-            // Registry exists and has content
-            return HttpResponse::BadRequest().json(serde_json::json!({
-                "error": "DID registry already exists. No new DID will be created."
-            }));
-        }
-    }
-
     // Get the method from the request, default to "key" if not specified
     let method = req.method.clone().unwrap_or_else(|| "key".to_string());
 
