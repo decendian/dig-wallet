@@ -13,6 +13,10 @@ chrono = "0.4.40"
 indexmap = "2.2.0"  # Use the latest version
 bs58 = "0.5"
 
+# Dependencies for ethr DID method
+ethereum-types = "0.14"
+tiny-keccak = { version = "2.0", features = ["keccak"] }
+hex = "0.4"
 
 [lib]
 name = "did_library"
