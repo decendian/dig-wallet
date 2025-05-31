@@ -62,8 +62,8 @@ pub fn hash_jwk(jwk: &serde_json::Value) -> Result<HashMap<String, String>, Stri
 }
 
 pub fn decode_key_type(did: &str) -> Result<KeyType, &'static str> {
-    if !did.starts_with("did:key:") {
-        return Err("Invalid DID: Must start with 'did:key:'");
+    if !did.starts_with("did:key:") && !did.starts_with("did:ethr:") {
+        return Err("Invalid DID: Unsupported DID method");
     }
     
     let encoded_key = did.replace("did:key:", "");

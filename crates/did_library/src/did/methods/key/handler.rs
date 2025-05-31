@@ -214,8 +214,8 @@ impl DIDMethod for KeyDID {
      */
     fn invalidate_did(&self, did: &str) -> Result<DIDDocument, &'static str> {
         // Validate DID format
-        if !did.starts_with("did:key:") {
-            return Err("Invalid DID: Must start with 'did:key:'");
+        if !did.starts_with("did:key:") && !did.starts_with("did:ethr:") {
+            return Err("Invalid DID: unsupported key method");
         }
 
         // Resolve existing document
