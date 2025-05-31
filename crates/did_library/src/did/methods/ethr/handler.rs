@@ -92,7 +92,7 @@ fn checksum_address(address: &H160) -> String {
 }
 
 // Helper function to parse ethr DID and extract network and address
-fn parse_ethr_did(did: &str) -> Result<(String, String), &'static str> {
+fn parse_ethr_did(did: &str) -> Result<(String), &'static str> {
     // Remove the "did:ethr:" prefix
     let remainder = did.strip_prefix("did:ethr:")
         .ok_or("Invalid ethr DID format")?;
@@ -101,7 +101,8 @@ fn parse_ethr_did(did: &str) -> Result<(String, String), &'static str> {
     if remainder.starts_with("0x") {
         // No network specified, default to mainnet
         let address = remainder.to_string();
-        Ok(("mainnet".to_string(), address))
+        // Ok(("mainnet".to_string(), address)) # Uncomment when network is implemented
+        Ok(address) // Temporary return for address only
     } else {
         // Network is specified, parse it
         let parts: Vec<&str> = remainder.splitn(2, ':').collect();
@@ -113,11 +114,11 @@ fn parse_ethr_did(did: &str) -> Result<(String, String), &'static str> {
         let address = parts[1].to_string();
         
         // Validate network name (basic validation)
-        if network.is_empty() || !address.starts_with("0x") {
+        if network.is_empty() {
             return Err("Invalid ethr DID format: invalid network or address");
         }
         
-        Ok((network, address))
+        Ok(address) // add network to return when network is implemented
     }
 }
 
@@ -167,19 +168,15 @@ impl DIDMethod for EthrHandler {
         let key_type = options.key_type.unwrap_or(KeyType::Secp256k1);
         
         // Generate the secp256k1 key
-        let jwk_string = match key_type {
-            KeyType::Secp256k1 => JWK::generate_secp256k1(),
-            // For ethr, we should primarily use secp256k1, but allow other types
-            KeyType::Ed25519 => {
-                println!("Warning: Using Ed25519 with ethr DID is non-standard");
-                JWK::generate_ed25519().expect("Failed to generate Ed25519 key")
-            },
-            KeyType::P256 => {
-                println!("Warning: Using P256 with ethr DID is non-standard");
-                JWK::generate_p256()
-            },
-        }
-        .to_string();
+        let jwk_result: Result<JWK, std::io::Error> = match key_type {
+            KeyType::Secp256k1 => Ok(JWK::generate_secp256k1()),
+            // For ethr, we should primarily use secp256k1, but allow other types x
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Unsupported key type for ethr DID",
+            )),
+        };
+        let jwk_string = jwk_result.expect("Unsupported key type for ethr DID").to_string();
 
         let serialize_jwk: serde_json::Value =
             serde_json::from_str(&jwk_string).expect("Failed to parse JWK");
@@ -301,7 +298,7 @@ impl DIDMethod for EthrHandler {
         }
 
         // Parse the DID to extract network and address
-        let (_network, ethereum_address) = parse_ethr_did(did)?;
+        let ethereum_address: String = parse_ethr_did(did)?;
         
         // Validate the Ethereum address format
         validate_ethereum_address(&ethereum_address)?;

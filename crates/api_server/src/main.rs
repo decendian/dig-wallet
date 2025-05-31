@@ -4,6 +4,7 @@ use config::{Config, ConfigError, Environment, File};
 use did_library::did::core::{did_document::DIDCreationOptions, traits::DIDMethod};
 use did_library::did::methods::key::handler::KeyDID;
 use did_library::did::methods::ethr::handler::EthrHandler;
+use did_library::did::methods::web::handler::Web;
 use did_library::DIDDocument;
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
@@ -98,43 +99,6 @@ pub struct CreateDIDResponse {
     document: DIDDocument,
 }
 
-async fn create_ethr_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
-    // Path to the registry file
-    let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
-
-    // Check if the registry file exists and has content
-    if let Ok(metadata) = std::fs::metadata(registry_path) {
-        if metadata.len() > 0 {
-            // Registry exists and has content
-            return HttpResponse::BadRequest().json(serde_json::json!({
-                "error": "DID registry already exists. No new DID will be created."
-            }));
-        }
-    }
-
-    // If we get here, either the file doesn't exist or is empty
-    // Create a new EthrHandler instance
-    let did_method = EthrHandler::new();
-
-    // Set up DID creation options
-    let options = DIDCreationOptions {
-        key_type: None,
-        verification_method: None,
-        authentication: None,
-        assertion_method: None,
-        key_agreement: None,
-        capability_invocation: None,
-        capability_delegation: None,
-        service: None,
-    };
-
-    let document = did_method.create_did(options);
-
-    // Return the DID document
-    HttpResponse::Ok().json(document)
-}
-
-
 /// Handler for creating a new DID
 /// TODO: Make so that it can handle/manage input from a user
 async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
@@ -174,9 +138,18 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
             let did_method = EthrHandler::new();
             did_method.create_did(options)
         },
-        _ => { // Default to "key" method
+        "key" => {
             let did_method = KeyDID::new();
             did_method.create_did(options)
+        }
+        "web" => {
+            let did_method = Web::new();
+            did_method.create_did(options)
+        }
+        _ => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": format!("Unsupported DID method: {}", method)
+            }));
         }
     };
 
@@ -336,8 +309,6 @@ async fn main() -> std::io::Result<()> {
                     )
                     .service(web::scope("/did")
                         .route("/create", web::post().to(create_did_handler))
-                        //edicated route for ethr DIDs for backwards compatibility
-                        .route("/create/ethr", web::post().to(create_ethr_did_handler))
                     ),
             )
     })
