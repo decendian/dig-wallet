@@ -10,6 +10,7 @@ import "./App.css";
 
 function App() {
   const [didMethod, setDidMethod] = useState("key");
+  const [ethrNetwork, setEthrNetwork] = useState("none"); // New state for Ethereum network
   const [did, setDid] = useState("");
   const [vc, setVc] = useState("");
   const [age, setAge] = useState("");
@@ -24,6 +25,19 @@ function App() {
   const [invalidateDid, setInvalidateDid] = useState("");
   const [invalidationResult, setInvalidationResult] = useState(null);
 
+  // Ethereum network options
+  const ethrNetworks = [
+    { value: "none", label: "Default (Mainnet)", chainId: 1, description: "Creates did:ethr:0x... format" },
+    { value: "mainnet", label: "Ethereum Mainnet (Explicit)", chainId: 1, description: "Creates did:ethr:mainnet:0x... format" },
+    { value: "polygon", label: "Polygon", chainId: 137 },
+    { value: "sepolia", label: "Sepolia Testnet", chainId: 11155111 },
+    { value: "bsc", label: "Binance Smart Chain", chainId: 56 },
+    { value: "arbitrum", label: "Arbitrum One", chainId: 42161 },
+    { value: "optimism", label: "Optimism", chainId: 10 },
+    { value: "base", label: "Base", chainId: 8453 },
+    { value: "avalanche", label: "Avalanche C-Chain", chainId: 43114 }
+  ];
+
   /**
    * createDid simulates the creation of a Decentralized Identifier.
    */
@@ -32,18 +46,39 @@ function App() {
       // Optional: Add loading state
       // setIsLoading(true);
 
+      // Prepare request body based on selected method
+      const requestBody = {
+        method: didMethod,
+        keyType: 'Ed25519',  // or 'Secp256k1' or 'P256'
+      };
+
+      // Add network information for Ethereum DIDs
+      if (didMethod === 'ethr') {
+        const selectedNetwork = ethrNetworks.find(network => network.value === ethrNetwork);
+        
+        if (ethrNetwork !== 'none') {
+          // Include network for explicit network selection
+          requestBody.network = ethrNetwork;
+          requestBody.chainId = selectedNetwork.chainId;
+        } else {
+          // For "none", don't include network (defaults to mainnet)
+          // This creates the classic did:ethr:0x... format
+          requestBody.useDefaultNetwork = true;
+        }
+        
+        // TODO: Backend needs to support network-specific endpoints
+        // Example: POST /api/did/ethr/[network]/create
+        // For "none" option: POST /api/did/ethr/create (no network in path)
+        // Or include network in the request body as we're doing here
+      }
+
       // Call your backend API
       const response = await fetch(CREATE_DID_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          // Include the selected method in the request
-          method: didMethod,
-          // Optional: Include any other parameters your backend needs
-          keyType: 'Ed25519',  // or 'Secp256k1' or 'P256'
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -74,6 +109,12 @@ function App() {
     }
 
     const encodedDid = encodeURIComponent(invalidateDid);
+    
+    // TODO: Backend might need network-specific invalidation endpoints
+    // For Ethereum DIDs, you might want to extract the network from the DID
+    // or add network selection for invalidation as well
+    // Example: POST /api/did/ethr/[network]/[did]/invalidate
+    
     const response = await fetch(`http://localhost:8080/api/did/${encodedDid}/invalidate`, {
       method: 'POST',
       headers: {
@@ -304,8 +345,54 @@ function App() {
               <option value="ethr">Ethr DID</option>
             </select>
           </label>
+          
+          {/* Network selector - only show when Ethr DID is selected */}
+          {didMethod === "ethr" && (
+            <label style={{ marginLeft: '20px' }}>
+              Network:
+              <select 
+                value={ethrNetwork} 
+                onChange={(e) => setEthrNetwork(e.target.value)}
+              >
+                {ethrNetworks.map(network => (
+                  <option key={network.value} value={network.value}>
+                    {network.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
-        <button onClick={createDid}>Create DID</button>
+        
+        {/* Display selected configuration */}
+        {didMethod === "ethr" && (
+          <div style={{ 
+            marginTop: '10px', 
+            padding: '8px', 
+            backgroundColor: '#f0f8ff', 
+            borderRadius: '4px',
+            fontSize: '14px'
+          }}>
+            Selected: {ethrNetworks.find(n => n.value === ethrNetwork)?.label} 
+            (Chain ID: {ethrNetworks.find(n => n.value === ethrNetwork)?.chainId})
+            {ethrNetwork === 'none' && (
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                Will create: did:ethr:0x... (classic format, defaults to mainnet)
+              </div>
+            )}
+            {ethrNetwork !== 'none' && (
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                Will create: did:ethr:{ethrNetwork}:0x... (network-specific format)
+              </div>
+            )}
+          </div>
+        )}
+        
+        <button onClick={createDid} style={{ marginTop: '10px' }}>
+          Create {didMethod === "ethr" ? 
+            (ethrNetwork === "none" ? "Default Ethereum " : `${ethrNetworks.find(n => n.value === ethrNetwork)?.label} `) 
+            : ""}DID
+        </button>
         {did &&
           <div>
             <p>Your DID:</p>
@@ -319,7 +406,7 @@ function App() {
         <h2>2. Invalidate DID</h2>
         <input
           type="text"
-          placeholder="Enter DID to invalidate (e.g., did:key:z6Mk...)"
+          placeholder="Enter DID to invalidate (e.g., did:key:z6Mk..., did:ethr:0x..., or did:ethr:polygon:0x...)"
           value={invalidateDid}
           onChange={(e) => setInvalidateDid(e.target.value)}
           style={{ width: '400px', padding: '8px', marginRight: '10px' }}
@@ -406,12 +493,30 @@ function App() {
       <div className="section">
         <p>
           Note: This application demonstrates the full DID presentation exchange flow:
-          1. Create a DID
+          1. Create a DID (now with network selection for Ethereum DIDs)
           2. Issue a Verifiable Credential
           3. Request a Presentation (verifier)
           4. Create a Presentation (holder)
           5. Verify the Presentation (verifier)
         </p>
+        
+        {/* TODO: Backend implementation notes */}
+        <div style={{ 
+          marginTop: '20px', 
+          padding: '15px', 
+          backgroundColor: '#fff3cd', 
+          borderRadius: '4px',
+          border: '1px solid #ffeaa7'
+        }}>
+          <h4>🚧 Backend Implementation Needed:</h4>
+          <ul style={{ textAlign: 'left', margin: '10px 0' }}>
+            <li><strong>DID Creation:</strong> Update CREATE_DID_URL endpoint to handle network parameter for Ethereum DIDs</li>
+            <li><strong>DID Resolution:</strong> Implement network-specific DID resolution for different chains</li>
+            <li><strong>DID Invalidation:</strong> Update invalidation endpoint to handle network-specific Ethereum DIDs</li>
+            <li><strong>Registry Storage:</strong> Store network information with DID documents</li>
+            <li><strong>Alternative Endpoint Structure:</strong> Consider endpoints like `/api/did/ethr/[network]/create` for explicit networks and `/api/did/ethr/create` for default format</li>
+          </ul>
+        </div>
       </div>
     </div>
   );

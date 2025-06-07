@@ -156,13 +156,25 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
 }
 
 /// Handler for invalidating a DID
+
 async fn invalidate_did_handler(path: web::Path<String>) -> impl Responder {
     let did = path.into_inner();
     
-    // Create a new KeyDID instance
-    let did_method = KeyDID::new();
+    // Determine which DID method to use based on the DID format
+    let result = if did.starts_with("did:key:") {
+        // Create a new KeyDID instance for key DIDs
+        let did_method = KeyDID::new();
+        did_method.invalidate_did(&did)
+    } else if did.starts_with("did:ethr:") {
+        // Create a new EthrHandler instance for Ethereum DIDs
+        let did_method = EthrHandler::new();
+        did_method.invalidate_did(&did)
+    } else {
+        // Unsupported DID method
+        Err("Unsupported DID method: only did:key: and did:ethr: are supported")
+    };
     
-    match did_method.invalidate_did(&did) {
+    match result {
         Ok(document) => HttpResponse::Ok().json(DIDOperationResponse {
             success: true,
             message: "DID successfully invalidated".to_string(),

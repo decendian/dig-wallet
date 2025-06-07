@@ -3,6 +3,8 @@ use crate::did::core::key_utils::*;
 use crate::did::core::traits::DIDMethod;
 use crate::DIDDocument;
 use ssi::jwk::JWK;
+use std::env;
+
 
 // Additional imports for ethr DID method
 use ethereum_types::H160;
@@ -373,8 +375,37 @@ impl DIDMethod for EthrHandler {
 
         Ok(document)
     }
-    
+
+    /**
+     * Invalidates (deactivates) an existing Ethereum DID
+     */
     fn invalidate_did(&self, did: &str) -> Result<DIDDocument, &'static str> {
-        todo!()
+        // Validate DID format - only accept Ethereum DIDs
+        if !did.starts_with("did:ethr:") {
+            return Err("Invalid DID: only Ethereum DID method is supported");
+        }
+
+        // Resolve existing document
+        let mut document = self.resolve_did(did)?;
+
+        // Check if already inactive
+        if document.status != "active" {
+            return Err("DID is already inactive");
+        }
+
+        // Change status to deactivated
+        document.status = "deactivated".to_string();
+
+        // Store the updated document
+        let registry_path = env::var("DID_REGISTRY_PATH")
+            .unwrap_or_else(|_| "./did_registry".to_string());
+        crate::did::registry::init_registry(Some(registry_path));
+        
+        if let Err(err) = crate::did::registry::get_registry().store(document.clone()) {
+            eprintln!("Failed to store deactivated Ethereum DID in registry: {}", err);
+            return Err("Failed to store deactivated DID");
+        }
+
+        Ok(document)
     }
 }
