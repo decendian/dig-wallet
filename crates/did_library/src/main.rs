@@ -19,6 +19,8 @@ fn main() {
         capability_invocation: None,
         capability_delegation: None,
         service: None,
+        network: None,
+        chain_id: None,
     };
 
     //TODO: Dynamically load and configure path for registry initialization (from .env file)

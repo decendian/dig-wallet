@@ -50,6 +50,8 @@ function App() {
       const requestBody = {
         method: didMethod,
         keyType: 'Ed25519',  // or 'Secp256k1' or 'P256'
+        network: String,
+        chainId: Number
       };
 
       // Add network information for Ethereum DIDs

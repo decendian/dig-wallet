@@ -68,6 +68,8 @@ pub struct DIDCreationOptions {
     pub capability_invocation: Option<Vec<String>>,
     pub capability_delegation: Option<Vec<String>>,
     pub service: Option<Vec<Service>>,
+    pub network: Option<String>,
+    pub chain_id: Option<String>,
 }
 
 /// Verification Method representing a public key

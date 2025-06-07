@@ -165,6 +165,8 @@ impl DIDMethod for EthrHandler {
     fn create_did(&self, options: DIDCreationOptions) -> DIDDocument {
         println!("Creating ethr DID");
         let did_prefix = String::from("did:ethr:");
+
+        let network = format!("{}:", options.network.unwrap_or("mainnet".to_string()));
         
         // For ethr DID, we primarily use Secp256k1 keys (Ethereum standard)
         let key_type = options.key_type.unwrap_or(KeyType::Secp256k1);
@@ -233,7 +235,7 @@ impl DIDMethod for EthrHandler {
         };
         
         // Remove 0x prefix for DID identifier
-        let did_identifier = format!("{}{}", did_prefix, checksummed_address.trim_start_matches("0x"));
+        let did_identifier = format!("{}{}{}", did_prefix, network, checksummed_address);
         
         let mut document = DIDDocument::new(&did_identifier, key_type);
 

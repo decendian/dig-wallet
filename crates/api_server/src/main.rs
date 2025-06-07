@@ -98,7 +98,9 @@ struct IssueCredentialRequest {
 struct CreateDIDRequest {
     // Optional method field, defaults to "key" if not provided
     method: Option<String>,
-    // Add any other fields needed for DID creation
+    key_type: Option<String>,
+    network: Option<String>,
+    chain_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -110,7 +112,7 @@ pub struct CreateDIDResponse {
 /// TODO: Make so that it can handle/manage input from a user
 async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
     // Path to the registry file
-    let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
+    //  registry_path = env::var("DID_REGISTRY_PATH").unwrap();
 
     // Get the method from the request, default to "key" if not specified
     let method = req.method.clone().unwrap_or_else(|| "key".to_string());
@@ -125,6 +127,8 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
         capability_invocation: None,
         capability_delegation: None,
         service: None,
+        network:  req.network.clone(),
+        chain_id:  req.chain_id.clone(),
     };
 
     did_library::did::registry::init_registry(Some(env::var("DID_REGISTRY_PATH").unwrap()));
