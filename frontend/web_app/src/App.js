@@ -68,10 +68,6 @@ function App() {
           requestBody.useDefaultNetwork = true;
         }
         
-        // TODO: Backend needs to support network-specific endpoints
-        // Example: POST /api/did/ethr/[network]/create
-        // For "none" option: POST /api/did/ethr/create (no network in path)
-        // Or include network in the request body as we're doing here
       }
 
       // Call your backend API
@@ -112,10 +108,6 @@ function App() {
 
     const encodedDid = encodeURIComponent(invalidateDid);
     
-    // TODO: Backend might need network-specific invalidation endpoints
-    // For Ethereum DIDs, you might want to extract the network from the DID
-    // or add network selection for invalidation as well
-    // Example: POST /api/did/ethr/[network]/[did]/invalidate
     
     const response = await fetch(`http://localhost:8080/api/did/${encodedDid}/invalidate`, {
       method: 'POST',
