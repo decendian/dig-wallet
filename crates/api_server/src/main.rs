@@ -112,7 +112,6 @@ pub struct CreateDIDResponse {
 /// TODO: Make so that it can handle/manage input from a user
 async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
     // Path to the registry file
-    //  registry_path = env::var("DID_REGISTRY_PATH").unwrap();
 
     // Get the method from the request, default to "key" if not specified
     let method = req.method.clone().unwrap_or_else(|| "key".to_string());

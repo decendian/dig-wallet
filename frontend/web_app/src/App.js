@@ -501,24 +501,7 @@ function App() {
           4. Create a Presentation (holder)
           5. Verify the Presentation (verifier)
         </p>
-        
-        {/* TODO: Backend implementation notes */}
-        <div style={{ 
-          marginTop: '20px', 
-          padding: '15px', 
-          backgroundColor: '#fff3cd', 
-          borderRadius: '4px',
-          border: '1px solid #ffeaa7'
-        }}>
-          <h4>🚧 Backend Implementation Needed:</h4>
-          <ul style={{ textAlign: 'left', margin: '10px 0' }}>
-            <li><strong>DID Creation:</strong> Update CREATE_DID_URL endpoint to handle network parameter for Ethereum DIDs</li>
-            <li><strong>DID Resolution:</strong> Implement network-specific DID resolution for different chains</li>
-            <li><strong>DID Invalidation:</strong> Update invalidation endpoint to handle network-specific Ethereum DIDs</li>
-            <li><strong>Registry Storage:</strong> Store network information with DID documents</li>
-            <li><strong>Alternative Endpoint Structure:</strong> Consider endpoints like `/api/did/ethr/[network]/create` for explicit networks and `/api/did/ethr/create` for default format</li>
-          </ul>
-        </div>
+      
       </div>
     </div>
   );
