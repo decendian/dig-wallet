@@ -6,12 +6,13 @@ use actix_web::{middleware, web, App, HttpResponse, HttpServer, Responder};
 use config::{Config, ConfigError, Environment, File};
 use did_library::did::core::{did_document::DIDCreationOptions, traits::DIDMethod};
 use did_library::did::methods::key::handler::KeyDID;
+use did_library::did::methods::ethr::handler::EthrHandler;
+use did_library::did::methods::web::handler::Web;
 use did_library::DIDDocument;
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 use std::env;
 use verifiable_credentials::{self, CredentialRequest, CredentialSubject};
-use crate::dto::request::CreateDidRequestDTO;
 
 #[derive(Deserialize)]
 struct CreatePresentationRequest {
@@ -101,8 +102,8 @@ pub struct CreateDIDResponse {
 
 /// Handler for creating a new DID
 /// TODO: Make so that it can handle/manage input from a user
-async fn create_did_handler(req: CreateDidRequestDTO) -> impl Responder {
-
+async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
+    
     // Create a new KeyDID instance
     let did_method = KeyDID::new();
     // Set up DID creation options
@@ -126,21 +127,15 @@ async fn issue_credential_handler(req: web::Json<IssueCredentialRequest>) -> imp
     // Extract the name from the subject data
     let subject_data = req.subject.clone();
 
-    let name = match subject_data.get("name") {
-        Some(name) => match name.as_str() {
-            Some(s) => s.to_string(),
-            None => {
-                return HttpResponse::BadRequest().json(serde_json::json!({
-                    "error": "Subject name must be a string"
-                }))
-            }
-        },
-        None => {
-            return HttpResponse::BadRequest().json(serde_json::json!({
-                "error": "Subject must include a name"
-            }))
-        }
-    };
+    // This is medicore solution, although it cleans up, we are using unwrap (an unsafe function that 
+    // shouldn't be used in production),
+    // TODO:: add generic handlers for dealing with Result<> functions
+    let name = subject_data
+      .get("name")
+      .ok_or_else(|| HttpResponse::BadRequest().body("Missing 'name' field"))
+      .and_then(|val| val.as_str()
+        .ok_or_else(|| HttpResponse::BadRequest().body("'name' must be a string"))
+        .map(|s| s.to_string())).unwrap();
 
     // Extract subject ID if present, converting it to an Option<String>
     // We extract this separately for easier access, even though it's already in attributes
@@ -159,8 +154,7 @@ async fn issue_credential_handler(req: web::Json<IssueCredentialRequest>) -> imp
     // Create the final credential request
     let request = CredentialRequest {
         subject: credential_subject,
-        type_: req.credential_type.clone(),
-        issuer_did: req.issuer_did.clone(),
+        credential_type: req.credential_type.clone(),
         expiration_date: req.expiration_date.clone(),
     };
 
