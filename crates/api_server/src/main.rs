@@ -6,15 +6,13 @@ use actix_web::{middleware, web, App, HttpResponse, HttpServer, Responder};
 use config::{Config, ConfigError, Environment, File};
 use did_library::did::core::{did_document::DIDCreationOptions, traits::DIDMethod};
 use did_library::did::methods::key::handler::KeyDID;
-// use did_library::did::methods::ethr::handler::EthrHandler;
-// use did_library::did::methods::web::handler::Web;
+use did_library::did::methods::ethr::handler::EthrHandler;
+use did_library::did::methods::web::handler::Web;
 use did_library::DIDDocument;
-// use dotenv::dotenv;
-// use serde::{Deserialize, Serialize};
+use dotenv::dotenv;
+use serde::{Deserialize, Serialize};
 use std::env;
-use std::fmt::format;
 use verifiable_credentials::{self, CredentialRequest, CredentialSubject};
-use serde::*;
 
 #[derive(Deserialize)]
 struct CreatePresentationRequest {
@@ -94,7 +92,9 @@ struct IssueCredentialRequest {
 #[derive(Deserialize)]
 //TODO: Implement this
 struct CreateDIDRequest {
-
+    // Optional method field, defaults to "key" if not provided
+    method: Option<String>,
+    // Add any other fields needed for DID creation
 }
 
 #[derive(Serialize, Deserialize)]
@@ -105,10 +105,13 @@ pub struct CreateDIDResponse {
 /// Handler for creating a new DID
 /// TODO: Make so that it can handle/manage input from a user
 async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
-    
-    // Create a new KeyDID instance
-    let did_method = KeyDID::new();
-    // Set up DID creation options
+    // Path to the registry file
+    let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
+
+    // Get the method from the request, default to "key" if not specified
+    let method = req.method.clone().unwrap_or_else(|| "key".to_string());
+
+    // Set up DID creation options (same for both methods)
     let options = DIDCreationOptions {
         key_type: None,
         verification_method: None,
@@ -120,7 +123,28 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
         service: None,
     };
 
-    let document = did_method.create_did(options);
+    did_library::did::registry::init_registry(Some(env::var("DID_REGISTRY_PATH").unwrap()));
+
+    // Create the document based on the selected method
+    let document = match method.as_str() {
+        "ethr" => {
+            let did_method = EthrHandler::new();
+            did_method.create_did(options)
+        },
+        "key" => {
+            let did_method = KeyDID::new();
+            did_method.create_did(options)
+        }
+        "web" => {
+            let did_method = Web::new();
+            did_method.create_did(options)
+        }
+        _ => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": format!("Unsupported DID method: {}", method)
+            }));
+        }
+    };
     // Return the DID document
     HttpResponse::Ok().json(document)
 }
@@ -129,7 +153,7 @@ async fn issue_credential_handler(req: web::Json<IssueCredentialRequest>) -> imp
     // Extract the name from the subject data
     let subject_data = req.subject.clone();
 
-    // This is medicore solution, although it cleans up, we are using unwrap (an unsafe function that 
+    // This is medicore solution, although it cleans up, we are using unwrap (an unsafe function that
     // shouldn't be used in production),
     // TODO:: add generic handlers for dealing with Result<> functions
     let name = subject_data
@@ -229,6 +253,8 @@ async fn verify_presentation_handler(
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    // Load .env file if it exists
+    dotenv().ok();
 
     //TODO: Look into logging
     if let Ok(log_level) = env::var("RUST_LOG") {
@@ -272,7 +298,9 @@ async fn main() -> std::io::Result<()> {
                             .route("/request", web::post().to(create_presentation_request_handler))
                             .route("/verify", web::post().to(verify_presentation_handler))
                     )
-                  .service(web::scope("/did").route("/create", web::post().to(create_did_handler))),
+                    .service(web::scope("/did")
+                        .route("/create", web::post().to(create_did_handler))
+                    ),
             )
     })
     .bind((config.host, config.port))?

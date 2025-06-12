@@ -12,6 +12,7 @@ import AppUI from './components/AppUI';
 import HttpClient from "./http/httpRequestHandler.ts";
 
 function App() {
+  const [didMethod, setDidMethod] = useState("key");
   const [did, setDid] = useState("");
   const [vc, setVc] = useState("");
   const [age, setAge] = useState("");
@@ -28,7 +29,12 @@ function App() {
       const requestCreateDid = new HttpClient(CREATE_DID_URL)
 
       //temporary: static key type added as there is no way to add values
-      const response = await requestCreateDid.post({ keyType: 'Ed25519' })
+      const response = await requestCreateDid.post({
+        // Include the selected method in the request
+        method: didMethod,
+        // Optional: Include any other parameters your backend needs
+        keyType: 'Ed25519',  // or 'Secp256k1' or 'P256'
+      });
 
       // Parse the response using the response DTO utilities
       // const didResponse = deserializeDidResponse(response.json());
