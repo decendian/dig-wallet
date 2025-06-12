@@ -236,6 +236,8 @@ function App() {
           presentation={presentation}
           verificationResult={verificationResult}
           createDid={createDid}
+          didMethod={didMethod}
+          setDidMethod={setDidMethod}
           issueCredential={issueCredential}
           createPresentationRequest={createPresentationRequest}
           createPresentation={createPresentation}

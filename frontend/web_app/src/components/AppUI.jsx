@@ -10,6 +10,8 @@ const AppUI = ({
   presentation,
   verificationResult,
   createDid,
+  didMethod,
+  setDidMethod,
   issueCredential,
   createPresentationRequest,
   createPresentation,
@@ -20,16 +22,29 @@ const AppUI = ({
   return (
     <div className="App">
       <h1>Decentralized Identity Guardian MVP</h1>
-      
+
       {/* Section 1: DID Creation */}
       <div className="section">
         <h2>1. Create Decentralized Identifier (DID)</h2>
+        <div className="method-selector">
+          <label>
+            DID Method:
+            <select
+                value={didMethod}
+                onChange={(e) => setDidMethod(e.target.value)}
+            >
+              <option value="key">Key DID</option>
+              <option value="ethr">Ethr DID</option>
+            </select>
+          </label>
+        </div>
         <button onClick={createDid}>Create DID</button>
         {did &&
-          <div>
-            <p>Your DID:</p>
-            <pre> {JSON.stringify(did, null, 2)} </pre>
-          </div>}
+            <div>
+              <p>Your DID:</p>
+              <pre>{JSON.stringify(did, null, 2)}</pre>
+            </div>
+        }
       </div>
       
       {/* Section 2: Credential Issuance */}
