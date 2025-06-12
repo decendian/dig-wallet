@@ -6,13 +6,15 @@ use actix_web::{middleware, web, App, HttpResponse, HttpServer, Responder};
 use config::{Config, ConfigError, Environment, File};
 use did_library::did::core::{did_document::DIDCreationOptions, traits::DIDMethod};
 use did_library::did::methods::key::handler::KeyDID;
-use did_library::did::methods::ethr::handler::EthrHandler;
-use did_library::did::methods::web::handler::Web;
+// use did_library::did::methods::ethr::handler::EthrHandler;
+// use did_library::did::methods::web::handler::Web;
 use did_library::DIDDocument;
-use dotenv::dotenv;
-use serde::{Deserialize, Serialize};
+// use dotenv::dotenv;
+// use serde::{Deserialize, Serialize};
 use std::env;
+use std::fmt::format;
 use verifiable_credentials::{self, CredentialRequest, CredentialSubject};
+use serde::*;
 
 #[derive(Deserialize)]
 struct CreatePresentationRequest {
