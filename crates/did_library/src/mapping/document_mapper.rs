@@ -127,3 +127,7 @@ impl DIDDocumentMapper {
             id: svc_dto.id.clone(),
             service_type: svc_dto.service_type.clone(),
             service_endpoint: svc_dto.service_endpoint.clone(),
+            properties: svc_dto.properties.clone(),
+        }
+    }
+}
