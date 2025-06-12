@@ -3,56 +3,64 @@ use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 
-// Either use an absolute path
-// Define the trait directly in this file
+// Define a trait that all Data Transfer Objects (DTOs) can implement for basic validation logic
 pub trait DataTransferObject {
-    fn validate(&self) -> Result<(), String>;
+  // Each DTO implementing this trait must define how it's validated
+  fn validate(&self) -> Result<(), String>;
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct VerifiableCredentialDTO {
-  #[serde(rename = "@context")]
-  pub context: Vec<String>,
-  pub id: String,
-  pub type_: Vec<String>,
-  pub issuer: IssuerDTO,
-  pub issuance_date: DateTime<Utc>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub expiration_date: Option<DateTime<Utc>>,
-  pub credential_subject: CredentialSubjectDTO,
-  pub proof: Option<ProofDTO>,
-}
-
+// DTO representing the issuer, which can be either a string or a structured object
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum IssuerDTO {
+  // Issuer represented by a simple string (typically a DID)
   String(String),
+
+  // Issuer represented as a JSON object with optional additional fields
   Object {
     id: String,
     name: Option<String>,
+
+    // Flattened to allow dynamic additional fields
     #[serde(flatten)]
     additional_properties: HashMap<String, serde_json::Value>,
   },
 }
 
+// DTO representing the credential subject (the entity the credential refers to)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CredentialSubjectDTO {
+  // Subject identifier (typically a DID)
   pub id: String,
+
+  // Claims about the subject, represented as arbitrary key-value pairs
   #[serde(flatten)]
   pub claims: HashMap<String, serde_json::Value>,
 }
 
+// DTO representing the cryptographic proof attached to the credential
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProofDTO {
+  // The type of proof (e.g., "Ed25519Signature2018")
   pub type_: String,
+
+  // Timestamp when the proof was created
   pub created: DateTime<Utc>,
+
+  // The verification method (public key reference)
   pub verification_method: String,
+
+  // The intended purpose of the proof (e.g., "assertionMethod")
   pub proof_purpose: String,
+
+  // The actual cryptographic signature or proof value
   pub proof_value: String,
 }
 
+// Implement the DataTransferObject trait for VerifiableCredentialDTO
 impl DataTransferObject for VerifiableCredentialDTO {
   fn validate(&self) -> Result<(), String> {
+    // Simple validations for required fields
     if self.id.is_empty() {
       return Err("Credential ID cannot be empty".to_string());
     }
