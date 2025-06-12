@@ -1,7 +1,8 @@
 // This is the main entry point for the crate
 pub mod format;
 pub mod keys;
-pub mod presentation; // Add this line
+pub mod presentation;
+pub mod dto;
 
 use std::collections::HashMap;
 use std::fs;
@@ -18,8 +19,7 @@ use did_library::did::registry::get_registry;
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CredentialRequest {
     pub subject: CredentialSubject,
-    pub type_: Vec<String>,
-    pub issuer_did: String,
+    pub credential_type: Vec<String>,
     pub expiration_date: Option<String>,
 }
 
@@ -192,9 +192,10 @@ pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredenti
    
     // Create a new credential based on the request
     let mut credential = format::create_credential(
+        //TODO: deal with this unwrap, if it returns None, we should handle is properly
         current_did.unwrap(),
         request.subject,
-        request.type_,
+        request.credential_type,
         request.expiration_date,
         option2
     );

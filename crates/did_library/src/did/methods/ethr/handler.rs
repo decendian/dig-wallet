@@ -290,7 +290,7 @@ impl DIDMethod for EthrHandler {
         
         document
     }
-
+    
     fn resolve_did(&self, did: &str) -> Result<DIDDocument, &'static str> {
         // Validate DID format
         if !did.starts_with("did:ethr:") {
