@@ -15,8 +15,6 @@ function App() {
   const [did, setDid] = useState("");
   const [vc, setVc] = useState("");
   const [age, setAge] = useState("");
-  const [error, setError] = useState(null);
-
   // New state for presentation exchange
   const [presentationRequest, setPresentationRequest] = useState(null);
   const [presentation, setPresentation] = useState(null);
@@ -40,7 +38,6 @@ function App() {
 
     } catch (error) {
       console.error("Error creating DID:", error);
-      setError(error.message);
     }
   };
 
@@ -119,16 +116,6 @@ function App() {
           }
       )
 
-      // const response = await fetch(REQUEST_PRESENTATION_URL, {
-      //
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-
-      //   }),
-      // });
-
-      // const presentationResponse = response.json();
       setPresentationRequest(response);
       console.log("Created Presentation Request:", response);
 
@@ -161,13 +148,9 @@ function App() {
             domain: presentationRequest.domain
           }
       )
-      // const vp = await response.json();
 
       // Create a presentation response that includes both the VP and submission metadata
       // This would normally be done by your wallet application
-      //TODO: presentationRequest is a const, it doesn't have fields, why are we accessing non existent fields?
-      // commented out for now, fix later
-
       const presentationSubmission = {
         id: `submission-${Date.now()}`,
         definition_id: presentationRequest.presentation_definition.id,
@@ -181,16 +164,12 @@ function App() {
       };
 
       const presentationResponse = {
-        verifiable_presentation: vp,
+        verifiable_presentation: response,
         presentation_submission: presentationSubmission
       };
 
       setPresentation(presentationResponse);
       console.log("Created Presentation:", presentationResponse);
-
-      // Manually set it as a default value for now
-      setPresentation({});
-      console.log("Created Presentation:", {});
 
     } catch (error) {
       console.error("Error creating presentation:", error);
@@ -215,20 +194,15 @@ function App() {
           }
       )
 
-      const result = await response.json();
-      setVerificationResult(result);
-      console.log("Verification Result:", result);
+      const result = await response;
+      setVerificationResult(response);
 
 
-
-      // TODO: result.is_valid method is not defined
-      //  return success for now by default
-      alert('Presentation verified successfully!');
-      // if (result.is_valid) {
-      //   alert('Presentation verified successfully!');
-      // } else {
-      //   alert('Presentation verification failed');
-      // }
+      if (result.is_valid) {
+        alert('Presentation verified successfully!');
+      } else {
+        alert('Presentation verification failed');
+      }
 
     } catch (error) {
       console.error("Error verifying presentation:", error);
