@@ -3,7 +3,7 @@ use crate::did::core::did_document::*;
 use crate::did::core::key_utils::*;
 use crate::did::core::traits::DIDMethod;
 use ssi::jwk::JWK;
-
+use dotenv::dotenv;
 pub struct KeyDID;
 
 /// Helpers specific to the Key DID method.
@@ -82,6 +82,7 @@ impl DIDMethod for KeyDID {
         }
         // Initialize the storage solutions and store the created document
         // let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
+        dotenv().ok();
         crate::did::registry::init_registry(Some(env::var("DID_REGISTRY_PATH").unwrap()));
         
         if let Err(err) = crate::did::registry::get_registry().store(document.clone()) {

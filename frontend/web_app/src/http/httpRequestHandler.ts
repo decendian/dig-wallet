@@ -108,19 +108,10 @@ export default class HttpClient {
     public async request<T>(config: RequestInit): Promise<T> {
 
         console.log(this.url)
-        const response = await fetch(this.url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                // Optional: Include any other parameters your backend needs
-                keyType: 'Ed25519',  // or 'Secp256k1' or 'P256'
-            }),
-        });
+        const response = await fetch(this.url, config);
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`HTTP error! status: ${response.statusText}`);
         }
 
         return response.json();

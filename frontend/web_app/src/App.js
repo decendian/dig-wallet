@@ -72,6 +72,7 @@ function App() {
       const response = await requestIssueCredential.post({
         subject: subjectData,
         credential_type: ['UniversityDegreeCredential'],
+        issuer_did: 'did:example:issuer',
         expiration_date: null
       })
 
@@ -86,7 +87,7 @@ function App() {
       //     expiration_date: null
       //   }),
       // });
-      const credentialResponse = await response.json();
+      // const credentialResponse = await response.json();
       setVc(response);
       console.log("Issued Credential:", response);
 
@@ -127,9 +128,9 @@ function App() {
       //   }),
       // });
 
-      const presentationResponse = response.json();
-      setPresentationRequest(presentationResponse);
-      console.log("Created Presentation Request:", presentationResponse);
+      // const presentationResponse = response.json();
+      setPresentationRequest(response);
+      console.log("Created Presentation Request:", response);
 
     } catch (error) {
       console.error("Error creating presentation request:", error);
@@ -154,38 +155,38 @@ function App() {
       // const holderDidString = getDidString(did);
       const requestCreatePresentation = new HttpClient(CREATE_PRESENTATION_URL)
       const response = await requestCreatePresentation.post( {
-            holder_did: did,  // Use the string, not the object
+            holder_did: did.id,
             credentials: [vc],
             challenge: presentationRequest.challenge,
             domain: presentationRequest.domain
           }
       )
-      const vp = await response.json();
+      // const vp = await response.json();
 
       // Create a presentation response that includes both the VP and submission metadata
       // This would normally be done by your wallet application
       //TODO: presentationRequest is a const, it doesn't have fields, why are we accessing non existent fields?
       // commented out for now, fix later
 
-      // const presentationSubmission = {
-      //   id: `submission-${Date.now()}`,
-      //   definition_id: presentationRequest.presentation_definition.id,
-      //   descriptor_map: [
-      //     {
-      //       id: presentationRequest.presentation_definition.input_descriptors[0].id,
-      //       format: "ldp_vp",
-      //       path: "$.verifiableCredential[0]"
-      //     }
-      //   ]
-      // };
-      //
-      // const presentationResponse = {
-      //   verifiable_presentation: vp,
-      //   presentation_submission: presentationSubmission
-      // };
-      //
-      // setPresentation(presentationResponse);
-      // console.log("Created Presentation:", presentationResponse);
+      const presentationSubmission = {
+        id: `submission-${Date.now()}`,
+        definition_id: presentationRequest.presentation_definition.id,
+        descriptor_map: [
+          {
+            id: presentationRequest.presentation_definition.input_descriptors[0].id,
+            format: "ldp_vp",
+            path: "$.verifiableCredential[0]"
+          }
+        ]
+      };
+
+      const presentationResponse = {
+        verifiable_presentation: vp,
+        presentation_submission: presentationSubmission
+      };
+
+      setPresentation(presentationResponse);
+      console.log("Created Presentation:", presentationResponse);
 
       // Manually set it as a default value for now
       setPresentation({});

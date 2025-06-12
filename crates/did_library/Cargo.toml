@@ -12,7 +12,7 @@ base64 = "0.22.1"
 ssi = "=0.10.2"
 chrono = "0.4.40"
 indexmap = "2.2.0"  # Use the latest version
-
+dotenv = "0.15.0"
 [lib]
 name = "did_library"
 path = "src/lib.rs"
