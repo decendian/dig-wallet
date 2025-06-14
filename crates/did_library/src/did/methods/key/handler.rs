@@ -3,8 +3,7 @@ use crate::did::core::did_document::*;
 use crate::did::core::key_utils::*;
 use crate::did::core::traits::DIDMethod;
 use ssi::jwk::JWK;
-// use crate::did::core::key_utils;
-
+use dotenv::dotenv;
 pub struct KeyDID;
 
 /// Helpers specific to the Key DID method.
@@ -54,8 +53,8 @@ fn resolve_did_key(did: &str) -> Result<DIDDocument, &'static str> {
 /// Implementation of DIDMethod trait for KeyDID
 impl DIDMethod for KeyDID {
     /**
-    	* Generates a new did:key DID and returns a new DIDDocument containing the did:key DID
-    	*/
+    * Generates a new did:key DID and returns a new DIDDocument containing the did:key DID
+    */
     fn create_did(&self, options: DIDCreationOptions) -> DIDDocument {
         let did_prefix = String::from("did:key:");
 
@@ -119,9 +118,10 @@ impl DIDMethod for KeyDID {
             document.add_service(&services);
         }
         // Initialize the storage solutions and store the created document
-        let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
-        crate::did::registry::init_registry(Some(registry_path));
-               
+        // let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
+        dotenv().ok();
+        crate::did::registry::init_registry(Some(env::var("DID_REGISTRY_PATH").unwrap()));
+        
         if let Err(err) = crate::did::registry::get_registry().store(document.clone()) {
             // Log error but continue - the document is still valid
             eprintln!("Failed to store DID in registry: {}", err);

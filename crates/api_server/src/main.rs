@@ -1,3 +1,6 @@
+mod api;
+mod dto;
+
 use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer, Responder};
 use config::{Config, ConfigError, Environment, File};
@@ -131,7 +134,7 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
     };
 
     did_library::did::registry::init_registry(Some(env::var("DID_REGISTRY_PATH").unwrap()));
-    
+
     // Create the document based on the selected method
     let document = match method.as_str() {
         "ethr" => {
@@ -152,7 +155,6 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
             }));
         }
     };
-
     // Return the DID document
     HttpResponse::Ok().json(document)
 
@@ -195,21 +197,15 @@ async fn issue_credential_handler(req: web::Json<IssueCredentialRequest>) -> imp
     // Extract the name from the subject data
     let subject_data = req.subject.clone();
 
-    let name = match subject_data.get("name") {
-        Some(name) => match name.as_str() {
-            Some(s) => s.to_string(),
-            None => {
-                return HttpResponse::BadRequest().json(serde_json::json!({
-                    "error": "Subject name must be a string"
-                }))
-            }
-        },
-        None => {
-            return HttpResponse::BadRequest().json(serde_json::json!({
-                "error": "Subject must include a name"
-            }))
-        }
-    };
+    // This is medicore solution, although it cleans up, we are using unwrap (an unsafe function that
+    // shouldn't be used in production),
+    // TODO:: add generic handlers for dealing with Result<> functions
+    let name = subject_data
+      .get("name")
+      .ok_or_else(|| HttpResponse::BadRequest().body("Missing 'name' field"))
+      .and_then(|val| val.as_str()
+        .ok_or_else(|| HttpResponse::BadRequest().body("'name' must be a string"))
+        .map(|s| s.to_string())).unwrap();
 
     // Extract subject ID if present, converting it to an Option<String>
     // We extract this separately for easier access, even though it's already in attributes
@@ -228,8 +224,7 @@ async fn issue_credential_handler(req: web::Json<IssueCredentialRequest>) -> imp
     // Create the final credential request
     let request = CredentialRequest {
         subject: credential_subject,
-        type_: req.credential_type.clone(),
-        issuer_did: req.issuer_did.clone(),
+        credential_type: req.credential_type.clone(),
         expiration_date: req.expiration_date.clone(),
     };
 
@@ -305,11 +300,17 @@ async fn main() -> std::io::Result<()> {
     // Load .env file if it exists
     dotenv().ok();
 
-    // Set up logging
-    if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "debug");
+    //TODO: Look into logging
+    if let Ok(log_level) = env::var("RUST_LOG") {
+        // RUST_LOG is set, use it
+        env_logger::init();
+    } else {
+        // RUST_LOG is not set, use default level
+        env_logger::Builder::new()
+          .filter_level(log::LevelFilter::Debug)
+          .init();
     }
-    env_logger::init();
+
 
     // Load configuration
     let config = load_config().unwrap_or_else(|e| {

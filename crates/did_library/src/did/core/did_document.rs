@@ -4,10 +4,8 @@
 //! including public keys, authentication methods, and services.
 
 use crate::did::core::key_utils::KeyType;
-use chrono::{Months, Utc};
 use serde::{Deserialize, Serialize};
 use ssi::claims::chrono;
-use ssi::xsd::Datatype::Date;
 use std::collections::HashMap;
 
 /// A structure representing a Decentralized Identifier (DID) Document.
