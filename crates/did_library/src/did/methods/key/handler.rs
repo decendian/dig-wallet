@@ -4,13 +4,12 @@ use crate::did::core::key_utils::*;
 use crate::did::core::traits::DIDMethod;
 use ssi::jwk::JWK;
 use dotenv::dotenv;
+use crate::did::methods::ethr::handler::EthrHandler;
+
 pub struct KeyDID;
 
 /// Helpers specific to the Key DID method.
 impl KeyDID {
-    pub fn new() -> Self {
-        Self {}
-    }
 }
 
 /*
@@ -55,7 +54,7 @@ impl DIDMethod for KeyDID {
     /**
     * Generates a new did:key DID and returns a new DIDDocument containing the did:key DID
     */
-    fn create_did(&self, options: DIDCreationOptions) -> DIDDocument {
+    fn create_did(options: DIDCreationOptions) -> DIDDocument {
         let did_prefix = String::from("did:key:");
 
         let key_type = options.key_type.unwrap_or(KeyType::Ed25519);
@@ -132,7 +131,7 @@ impl DIDMethod for KeyDID {
     /*
     * Retrieves the current DID Document for an existing DID
     */
-    fn resolve_did(&self, did: &str) -> Result<DIDDocument, &'static str> {
+    fn resolve_did( did: &str) -> Result<DIDDocument, &'static str> {
         // Validate DID format - support key, ethr, and web methods
         if !did.starts_with("did:") {
             return Err("Invalid DID: Must start with 'did:'");
@@ -140,8 +139,8 @@ impl DIDMethod for KeyDID {
 
         let method = did.split(':').nth(1).unwrap_or("");
         match method {
-            "key" | "ethr" | "web" => {},
-            _ => return Err("Invalid DID: Method must be 'key', 'ethr', or 'web'"),
+            "key" => {},
+            _ => return Err("Invalid DID: Method must be 'key'"),
         }
 
         // First, try to retrieve from registry
@@ -151,7 +150,7 @@ impl DIDMethod for KeyDID {
         if let Ok(Some(stored_document)) = crate::did::registry::get_registry().get(did) {
             return Ok(stored_document);
         }
-
+        
         // If not found in registry, reconstruct from DID string (for did:key method)
         if method == "key" {
             return resolve_did_key(did);
@@ -166,7 +165,6 @@ impl DIDMethod for KeyDID {
     	* Modifies an existing DID Document (adding keys, rotating keys, changing services, etc.).
      */
     fn update_did(
-        &self,
         did: &str,
         options: DIDCreationOptions,
     ) -> Result<DIDDocument, &'static str> {
@@ -176,7 +174,7 @@ impl DIDMethod for KeyDID {
         }
 
         // Resolve existing document
-        let mut document = self.resolve_did(did)?;
+        let mut document = EthrHandler::resolve_did(did)?;
 
         if let Some(methods) = options.verification_method {
             document.add_verification_method(&methods);
@@ -209,17 +207,17 @@ impl DIDMethod for KeyDID {
         Ok(document)
     }
 
-        /**
+    /**
      * Invalidates (deactivates) an existing DID
      */
-    fn invalidate_did(&self, did: &str) -> Result<DIDDocument, &'static str> {
+    fn invalidate_did(did: &str) -> Result<DIDDocument, &'static str> {
         // Validate DID format
         if !did.starts_with("did:key:") {
             return Err("Invalid DID: unsupported key method");
         }
 
         // Resolve existing document
-        let mut document = self.resolve_did(did)?;
+        let mut document = KeyDID::resolve_did(did)?;
 
         // Check if already inactive
         if document.status != "active" {

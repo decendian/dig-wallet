@@ -28,5 +28,5 @@ fn main() {
     //     "did_library/resources/did_registry.json".to_string(),
     // ));
 
-    let document = KeyDID.create_did(options);
+    let document = KeyDID::create_did(options);
 }

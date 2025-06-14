@@ -138,16 +138,13 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
     // Create the document based on the selected method
     let document = match method.as_str() {
         "ethr" => {
-            let did_method = EthrHandler::new();
-            did_method.create_did(options)
+            EthrHandler::create_did(options)
         },
         "key" => {
-            let did_method = KeyDID::new();
-            did_method.create_did(options)
+            KeyDID::create_did(options)
         }
         "web" => {
-            let did_method = Web::new();
-            did_method.create_did(options)
+            Web::create_did(options)
         }
         _ => {
             return HttpResponse::BadRequest().json(serde_json::json!({
@@ -157,23 +154,19 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
     };
     // Return the DID document
     HttpResponse::Ok().json(document)
-
 }
 
 /// Handler for invalidating a DID
-
 async fn invalidate_did_handler(path: web::Path<String>) -> impl Responder {
     let did = path.into_inner();
     
     // Determine which DID method to use based on the DID format
-    let result = if did.starts_with("did:key:") {
+    let result: Result<DIDDocument, &str> = if did.starts_with("did:key:") {
         // Create a new KeyDID instance for key DIDs
-        let did_method = KeyDID::new();
-        did_method.invalidate_did(&did)
+        KeyDID::invalidate_did(&did)
     } else if did.starts_with("did:ethr:") {
         // Create a new EthrHandler instance for Ethereum DIDs
-        let did_method = EthrHandler::new();
-        did_method.invalidate_did(&did)
+        EthrHandler::invalidate_did(&did)
     } else {
         // Unsupported DID method
         Err("Unsupported DID method: only did:key: and did:ethr: are supported")
@@ -291,9 +284,6 @@ async fn verify_presentation_handler(
         })),
     }
 }
-
-
-
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

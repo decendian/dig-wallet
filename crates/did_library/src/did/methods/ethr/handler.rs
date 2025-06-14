@@ -15,9 +15,6 @@ use base64;
 pub struct EthrHandler;
 
 impl EthrHandler {
-    pub fn new() -> Self {
-        Self {}
-    }
 }
 
 // This function correctly derives an Ethereum address from a secp256k1 public key
@@ -162,7 +159,7 @@ fn verify_address_checksum(address: &str) -> bool {
 
 
 impl DIDMethod for EthrHandler {
-    fn create_did(&self, options: DIDCreationOptions) -> DIDDocument {
+    fn create_did(options: DIDCreationOptions) -> DIDDocument {
         println!("Creating ethr DID");
         let did_prefix = String::from("did:ethr:");
 
@@ -295,7 +292,7 @@ impl DIDMethod for EthrHandler {
         document
     }
     
-    fn resolve_did(&self, did: &str) -> Result<DIDDocument, &'static str> {
+    fn resolve_did(did: &str) -> Result<DIDDocument, &'static str> {
         // Validate DID format
         if !did.starts_with("did:ethr:") {
             return Err("Invalid DID: Must start with 'did:ethr:'");
@@ -322,7 +319,6 @@ impl DIDMethod for EthrHandler {
     }
 
     fn update_did(
-        &self,
         did: &str,
         options: DIDCreationOptions,
     ) -> Result<DIDDocument, &'static str> {
@@ -332,7 +328,7 @@ impl DIDMethod for EthrHandler {
         }
 
         // Resolve existing document
-        let mut document = self.resolve_did(did)?;
+        let mut document = EthrHandler::resolve_did(did)?;
 
         // Add new verification methods if provided
         if let Some(methods) = options.verification_method {
@@ -381,20 +377,20 @@ impl DIDMethod for EthrHandler {
     /**
      * Invalidates (deactivates) an existing Ethereum DID
      */
-    fn invalidate_did(&self, did: &str) -> Result<DIDDocument, &'static str> {
+    fn invalidate_did(did: &str) -> Result<DIDDocument, &'static str> {
         // Validate DID format - only accept Ethereum DIDs
         if !did.starts_with("did:ethr:") {
             return Err("Invalid DID: only Ethereum DID method is supported");
         }
 
         // Resolve existing document
-        let mut document = self.resolve_did(did)?;
+        let mut document = EthrHandler::resolve_did(did)?;
 
         // Check if already inactive
         if document.status != "active" {
             return Err("DID is already inactive");
         }
-
+        
         // Change status to deactivated
         document.status = "deactivated".to_string();
 
@@ -407,7 +403,6 @@ impl DIDMethod for EthrHandler {
             eprintln!("Failed to store deactivated Ethereum DID in registry: {}", err);
             return Err("Failed to store deactivated DID");
         }
-
         Ok(document)
     }
 }
