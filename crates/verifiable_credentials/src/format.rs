@@ -132,7 +132,7 @@ pub fn create_credential(
     //     "https://www.w3.org/2018/credentials/examples/v1".to_string(),
     // ],
 
-    let key_did = KeyDID::new().create_did(options);
+    let key_did = KeyDID::create_did(options);
 
     // Make it based it on the did_registry.json created file
     VerifiableCredential {

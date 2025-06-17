@@ -3,9 +3,10 @@
 //! This module provides cryptographic key utilities for creating and
 //! manipulating keys used in DIDs.
 
-use base64::Engine;
+use base64::{Engine as _, engine::general_purpose};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use bs58;
 
 /// Supported key types
 #[derive(Debug, Clone, Serialize, Deserialize, Copy)]
@@ -60,24 +61,78 @@ pub fn hash_jwk(jwk: &serde_json::Value) -> Result<HashMap<String, String>, Stri
     Ok(map)
 }
 
+// Commented out code until we figure out what
 pub fn decode_key_type(did: &str) -> Result<KeyType, &'static str> {
-    if !did.starts_with("did:key:") {
-        return Err("Invalid DID: Must start with 'did:key:'");
-    }
-    let encoded_key = did.replace("did:key:", "");
-
-    if encoded_key.len() < 2 {
-        return Err("Invalid DID: Must be at least 2 characters long");
-    }
-    let prefix_bytes: &[u8] = &encoded_key.as_bytes()[..2];
-
-    match prefix_bytes {
-        [0xed, 0x01] => Ok(KeyType::Ed25519),
-        [0xe7, 0x01] => Ok(KeyType::Secp256k1),
-        [0x12, 0x00] => Ok(KeyType::P256),
-        _ => Err("Key Type not supported"),
-    }
+    // if !did.starts_with("did:key:") && !did.starts_with("did:ethr:") {
+    //     return Err("Invalid DID: Unsupported DID method");
+    // }
+    
+    // let encoded_key = did.replace("did:key:", "");
+    
+    // if encoded_key.is_empty() {
+    //     return Err("Invalid DID: Empty key portion");
+    // }
+    
+    // println!("Encoded key: '{}'", encoded_key);
+    
+    // // Try base64url decoding first (since your key appears to be base64url)
+    // let decoded_bytes = match general_purpose::URL_SAFE_NO_PAD.decode(&encoded_key) {
+    //     Ok(bytes) => {
+    //         println!("Successfully decoded as base64url");
+    //         bytes
+    //     }
+    //     Err(_) => {
+    //         // Fall back to base58 if base64url fails
+    //         println!("Base64url failed, trying base58...");
+    //         bs58::decode(&encoded_key)
+    //             .into_vec()
+    //             .map_err(|_| "Invalid DID: Failed to decode both base64url and base58")?
+    //     }
+    // };
+    
+    // println!("Decoded bytes length: {}", decoded_bytes.len());
+    // if decoded_bytes.len() >= 2 {
+    //     println!("First two bytes: [{:02x}, {:02x}]", decoded_bytes[0], decoded_bytes[1]);
+    // }
+    
+    // if decoded_bytes.len() < 2 {
+    //     return Err("Invalid DID: Decoded key too short");
+    // }
+    
+    // // First, try multicodec prefixes
+    // match &decoded_bytes[..2] {
+    //     [0xed, 0x01] => return Ok(KeyType::Ed25519),
+    //     [0xe7, 0x01] => return Ok(KeyType::Secp256k1),
+    //     [0x12, 0x00] => return Ok(KeyType::P256),
+    //     _ => {
+    //         println!("No multicodec prefix found, checking raw key lengths...");
+    //     }
+    // }
+    
+    // // If no multicodec prefix, check by key length (raw keys)
+    // match decoded_bytes.len() {
+    //     32 => {
+    //         println!("32 bytes detected - likely raw Ed25519 public key");
+    //         Ok(KeyType::Ed25519)
+    //     }
+    //     33 => {
+    //         println!("33 bytes detected - likely compressed secp256k1 public key");
+    //         Ok(KeyType::Secp256k1)
+    //     }
+    //     65 => {
+    //         println!("65 bytes detected - likely uncompressed secp256k1 public key");
+    //         Ok(KeyType::Secp256k1)
+    //     }
+    //     _ => {
+    //         println!("Unknown key length: {} bytes", decoded_bytes.len());
+    //         println!("Unknown prefix: {:02x} {:02x}", decoded_bytes[0], decoded_bytes[1]);
+    //         println!("Full decoded bytes: {:02x?}", &decoded_bytes[..std::cmp::min(10, decoded_bytes.len())]);
+    //         Err("Key Type not supported")
+    //     }
+    // }
+    todo!()
 }
+
 
 /// A private key used for signing
 #[derive(Debug)]

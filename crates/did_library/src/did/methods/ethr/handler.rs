@@ -3,6 +3,8 @@ use crate::did::core::key_utils::*;
 use crate::did::core::traits::DIDMethod;
 use crate::DIDDocument;
 use ssi::jwk::JWK;
+use std::env;
+
 
 // Additional imports for ethr DID method
 use ethereum_types::H160;
@@ -13,9 +15,6 @@ use base64;
 pub struct EthrHandler;
 
 impl EthrHandler {
-    pub fn new() -> Self {
-        Self {}
-    }
 }
 
 // This function correctly derives an Ethereum address from a secp256k1 public key
@@ -160,9 +159,11 @@ fn verify_address_checksum(address: &str) -> bool {
 
 
 impl DIDMethod for EthrHandler {
-    fn create_did(&self, options: DIDCreationOptions) -> DIDDocument {
+    fn create_did(options: DIDCreationOptions) -> DIDDocument {
         println!("Creating ethr DID");
         let did_prefix = String::from("did:ethr:");
+
+        let network = format!("{}:", options.network.unwrap_or("mainnet".to_string()));
         
         // For ethr DID, we primarily use Secp256k1 keys (Ethereum standard)
         let key_type = options.key_type.unwrap_or(KeyType::Secp256k1);
@@ -231,7 +232,7 @@ impl DIDMethod for EthrHandler {
         };
         
         // Remove 0x prefix for DID identifier
-        let did_identifier = format!("{}{}", did_prefix, checksummed_address.trim_start_matches("0x"));
+        let did_identifier = format!("{}{}{}", did_prefix, network, checksummed_address);
         
         let mut document = DIDDocument::new(&did_identifier, key_type);
 
@@ -291,7 +292,7 @@ impl DIDMethod for EthrHandler {
         document
     }
     
-    fn resolve_did(&self, did: &str) -> Result<DIDDocument, &'static str> {
+    fn resolve_did(did: &str) -> Result<DIDDocument, &'static str> {
         // Validate DID format
         if !did.starts_with("did:ethr:") {
             return Err("Invalid DID: Must start with 'did:ethr:'");
@@ -318,7 +319,6 @@ impl DIDMethod for EthrHandler {
     }
 
     fn update_did(
-        &self,
         did: &str,
         options: DIDCreationOptions,
     ) -> Result<DIDDocument, &'static str> {
@@ -328,7 +328,7 @@ impl DIDMethod for EthrHandler {
         }
 
         // Resolve existing document
-        let mut document = self.resolve_did(did)?;
+        let mut document = EthrHandler::resolve_did(did)?;
 
         // Add new verification methods if provided
         if let Some(methods) = options.verification_method {
@@ -371,6 +371,38 @@ impl DIDMethod for EthrHandler {
             eprintln!("Failed to store updated DID in registry: {}", err);
         }
 
+        Ok(document)
+    }
+
+    /**
+     * Invalidates (deactivates) an existing Ethereum DID
+     */
+    fn invalidate_did(did: &str) -> Result<DIDDocument, &'static str> {
+        // Validate DID format - only accept Ethereum DIDs
+        if !did.starts_with("did:ethr:") {
+            return Err("Invalid DID: only Ethereum DID method is supported");
+        }
+
+        // Resolve existing document
+        let mut document = EthrHandler::resolve_did(did)?;
+
+        // Check if already inactive
+        if document.status != "active" {
+            return Err("DID is already inactive");
+        }
+        
+        // Change status to deactivated
+        document.status = "deactivated".to_string();
+
+        // Store the updated document
+        let registry_path = env::var("DID_REGISTRY_PATH")
+            .unwrap_or_else(|_| "./did_registry".to_string());
+        crate::did::registry::init_registry(Some(registry_path));
+        
+        if let Err(err) = crate::did::registry::get_registry().store(document.clone()) {
+            eprintln!("Failed to store deactivated Ethereum DID in registry: {}", err);
+            return Err("Failed to store deactivated DID");
+        }
         Ok(document)
     }
 }

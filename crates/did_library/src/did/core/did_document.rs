@@ -17,6 +17,8 @@ pub struct DIDDocument {
 
     /// The DID that the document is about
     pub id: String,
+
+    pub status: String,
     
     /// The type of key signature algorithm used for creating did method
     #[serde(rename = "@type")]
@@ -64,6 +66,8 @@ pub struct DIDCreationOptions {
     pub capability_invocation: Option<Vec<String>>,
     pub capability_delegation: Option<Vec<String>>,
     pub service: Option<Vec<Service>>,
+    pub network: Option<String>,
+    pub chain_id: Option<String>,
 }
 
 /// Verification Method representing a public key
@@ -161,6 +165,7 @@ impl DIDDocument {
         DIDDocument {
             context: vec!["https://www.w3.org/ns/did/v1".to_string()],
             id: id.to_string(),
+            status: "active".to_string(),
             key_type,
             verification_method: Vec::new(),
             authentication: Vec::new(),

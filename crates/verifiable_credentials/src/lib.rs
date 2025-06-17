@@ -174,7 +174,9 @@ pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredenti
                     props
                 }
             }
-        ])
+        ]),
+        network: None,
+        chain_id: None
     };
     
     let option2 = DIDCreationOptions {
@@ -186,6 +188,8 @@ pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredenti
         capability_invocation: None,
         capability_delegation: None,
         service: None,
+        network: None,
+        chain_id: None,
     };
     let registry = get_registry().list_dids();
     let current_did = registry?.pop();

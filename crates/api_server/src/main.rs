@@ -41,6 +41,13 @@ struct ServerConfig {
     port: u16,
 }
 
+#[derive(Serialize)]
+struct DIDOperationResponse {
+    success: bool,
+    message: String,
+    document: Option<DIDDocument>,
+}
+
 impl Default for ServerConfig {
     fn default() -> Self {
         Self {
@@ -94,7 +101,9 @@ struct IssueCredentialRequest {
 struct CreateDIDRequest {
     // Optional method field, defaults to "key" if not provided
     method: Option<String>,
-    // Add any other fields needed for DID creation
+    key_type: Option<String>,
+    network: Option<String>,
+    chain_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -106,7 +115,6 @@ pub struct CreateDIDResponse {
 /// TODO: Make so that it can handle/manage input from a user
 async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder {
     // Path to the registry file
-    let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
 
     // Get the method from the request, default to "key" if not specified
     let method = req.method.clone().unwrap_or_else(|| "key".to_string());
@@ -121,6 +129,8 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
         capability_invocation: None,
         capability_delegation: None,
         service: None,
+        network:  req.network.clone(),
+        chain_id:  req.chain_id.clone(),
     };
 
     did_library::did::registry::init_registry(Some(env::var("DID_REGISTRY_PATH").unwrap()));
@@ -128,16 +138,13 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
     // Create the document based on the selected method
     let document = match method.as_str() {
         "ethr" => {
-            let did_method = EthrHandler::new();
-            did_method.create_did(options)
+            EthrHandler::create_did(options)
         },
         "key" => {
-            let did_method = KeyDID::new();
-            did_method.create_did(options)
+            KeyDID::create_did(options)
         }
         "web" => {
-            let did_method = Web::new();
-            did_method.create_did(options)
+            Web::create_did(options)
         }
         _ => {
             return HttpResponse::BadRequest().json(serde_json::json!({
@@ -147,6 +154,36 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
     };
     // Return the DID document
     HttpResponse::Ok().json(document)
+}
+
+/// Handler for invalidating a DID
+async fn invalidate_did_handler(path: web::Path<String>) -> impl Responder {
+    let did = path.into_inner();
+    
+    // Determine which DID method to use based on the DID format
+    let result: Result<DIDDocument, &str> = if did.starts_with("did:key:") {
+        // Create a new KeyDID instance for key DIDs
+        KeyDID::invalidate_did(&did)
+    } else if did.starts_with("did:ethr:") {
+        // Create a new EthrHandler instance for Ethereum DIDs
+        EthrHandler::invalidate_did(&did)
+    } else {
+        // Unsupported DID method
+        Err("Unsupported DID method: only did:key: and did:ethr: are supported")
+    };
+    
+    match result {
+        Ok(document) => HttpResponse::Ok().json(DIDOperationResponse {
+            success: true,
+            message: "DID successfully invalidated".to_string(),
+            document: Some(document),
+        }),
+        Err(error) => HttpResponse::BadRequest().json(DIDOperationResponse {
+            success: false,
+            message: error.to_string(),
+            document: None,
+        }),
+    }
 }
 
 async fn issue_credential_handler(req: web::Json<IssueCredentialRequest>) -> impl Responder {
@@ -248,9 +285,6 @@ async fn verify_presentation_handler(
     }
 }
 
-
-
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // Load .env file if it exists
@@ -298,8 +332,10 @@ async fn main() -> std::io::Result<()> {
                             .route("/request", web::post().to(create_presentation_request_handler))
                             .route("/verify", web::post().to(verify_presentation_handler))
                     )
-                    .service(web::scope("/did")
-                        .route("/create", web::post().to(create_did_handler))
+                    .service(
+                        web::scope("/did")
+                            .route("/create", web::post().to(create_did_handler))
+                            .route("/{did}/invalidate", web::post().to(invalidate_did_handler))
                     ),
             )
     })

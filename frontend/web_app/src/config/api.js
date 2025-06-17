@@ -5,10 +5,13 @@ const API_URL = process.env.REACT_APP_API_URL;
 // Configuration object for all API endpoints
 export const apiConfig = {
   baseUrl: API_URL,
-  endpoints: {
+  pathPrefix: {
+    invalidteDidPrefix: '/did/'
+  },
+  pathSuffix: {
     createDid: '/did/create',  
     issueCredential: '/credentials/issue',
-    // New presentation endpoints
+    invalidateDidSuffix: '/invalidate',
     createPresentation: '/presentations/create',
     requestPresentation: '/presentations/request',
     verifyPresentation: '/presentations/verify',
@@ -22,9 +25,10 @@ export const getApiUrl = (endpoint) => {
 };
 
 // Export specific endpoint URLs
-export const CREATE_DID_URL = getApiUrl(apiConfig.endpoints.createDid);
-export const ISSUE_CREDENTIAL_URL = getApiUrl(apiConfig.endpoints.issueCredential);
+export const CREATE_DID_URL = getApiUrl(apiConfig.pathSuffix.createDid);
+export const ISSUE_CREDENTIAL_URL = getApiUrl(apiConfig.pathSuffix.issueCredential);
+export const INVALIDATE_DID_URL = (encodedUrl) => getApiUrl(apiConfig.pathPrefix.invalidteDidPrefix + encodedUrl + apiConfig.pathSuffix.invalidateDidSuffix)
 // Export new presentation endpoint URLs
-export const CREATE_PRESENTATION_URL = getApiUrl(apiConfig.endpoints.createPresentation);
-export const REQUEST_PRESENTATION_URL = getApiUrl(apiConfig.endpoints.requestPresentation);
-export const VERIFY_PRESENTATION_URL = getApiUrl(apiConfig.endpoints.verifyPresentation);
+export const CREATE_PRESENTATION_URL = getApiUrl(apiConfig.pathSuffix.createPresentation);
+export const REQUEST_PRESENTATION_URL = getApiUrl(apiConfig.pathSuffix.requestPresentation);
+export const VERIFY_PRESENTATION_URL = getApiUrl(apiConfig.pathSuffix.verifyPresentation);

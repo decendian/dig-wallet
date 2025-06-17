@@ -19,6 +19,8 @@ fn main() {
         capability_invocation: None,
         capability_delegation: None,
         service: None,
+        network: None,
+        chain_id: None,
     };
 
     //TODO: Dynamically load and configure path for registry initialization (from .env file)
@@ -26,5 +28,5 @@ fn main() {
     //     "did_library/resources/did_registry.json".to_string(),
     // ));
 
-    let document = KeyDID.create_did(options);
+    let document = KeyDID::create_did(options);
 }

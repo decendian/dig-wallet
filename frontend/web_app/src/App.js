@@ -4,7 +4,7 @@ import {
   CREATE_PRESENTATION_URL,
   REQUEST_PRESENTATION_URL,
   VERIFY_PRESENTATION_URL,
-  CREATE_DID_URL
+  CREATE_DID_URL, INVALIDATE_DID_URL
 } from './config/api';
 import "./App.css";
 // import { deserializeDidResponse, getDidString } from './dto/response/CreateDidResp';
@@ -13,37 +13,94 @@ import HttpClient from "./http/httpRequestHandler.ts";
 
 function App() {
   const [didMethod, setDidMethod] = useState("key");
+  const [ethrNetwork, setEthrNetwork] = useState("none"); // New state for Ethereum network
   const [did, setDid] = useState("");
   const [vc, setVc] = useState("");
   const [age, setAge] = useState("");
-  // New state for presentation exchange
-  const [presentationRequest, setPresentationRequest] = useState(null);
   const [presentation, setPresentation] = useState(null);
   const [verificationResult, setVerificationResult] = useState(null);
+  const [presentationRequest, setPresentationRequest] = useState(null);
+  const [invalidateDid, setInvalidateDid] = useState("");
+  const [invalidationResult, setInvalidationResult] = useState(null);
 
-  /**
+  // Ethereum network options
+  const ethrNetworks = [
+    {value: "none", label: "Default (Mainnet)", chainId: 1, description: "Creates did:ethr:0x... format"},
+    {
+      value: "mainnet",
+      label: "Ethereum Mainnet (Explicit)",
+      chainId: 1,
+      description: "Creates did:ethr:mainnet:0x... format"
+    },
+    {value: "polygon", label: "Polygon", chainId: 137},
+    {value: "sepolia", label: "Sepolia Testnet", chainId: 11155111},
+    {value: "bsc", label: "Binance Smart Chain", chainId: 56},
+    {value: "arbitrum", label: "Arbitrum One", chainId: 42161},
+    {value: "optimism", label: "Optimism", chainId: 10},
+    {value: "base", label: "Base", chainId: 8453},
+    {value: "avalanche", label: "Avalanche C-Chain", chainId: 43114}
+  ];
+
+  const keyTypes = {
+    ED25519: 'Ed22519',
+  };
+  const didMethods = {
+    ETHR_METHOD: 'ethr',
+    KEY_METHOD: 'key',
+  };
+
+
+    /**
    * createDid simulates the creation of a Decentralized Identifier.
    */
   const createDid = async () => {
     try {
       const requestCreateDid = new HttpClient(CREATE_DID_URL)
-
-      //temporary: static key type added as there is no way to add values
-      const response = await requestCreateDid.post({
-        // Include the selected method in the request
+      const requestBody = {
         method: didMethod,
-        // Optional: Include any other parameters your backend needs
-        keyType: 'Ed25519',  // or 'Secp256k1' or 'P256'
-      });
-
-      // Parse the response using the response DTO utilities
-      // const didResponse = deserializeDidResponse(response.json());
-
-      // Update state with the complete DID document
+        keyType: keyTypes.ED25519,
+        network: String,
+        chainId: Number
+      }
+      if (didMethod === didMethods.ETHR_METHOD) {
+        const selectedNetwork = ethrNetworks.find(network => network.value === ethrNetwork);
+        requestBody.network = ethrNetwork;
+        requestBody.chainId = selectedNetwork.chainId;
+      }
+      const response = await requestCreateDid.post(requestBody);
       setDid(response);
+      console.log("Created DID:", response)
 
     } catch (error) {
       console.error("Error creating DID:", error);
+    }
+  };
+
+  const invalidateDidHandler = async () => {
+    try {
+
+      if (!invalidateDid) {
+        alert('Please enter a DID to invalidate');
+        return;
+      }
+
+      const encodedDid = encodeURIComponent(invalidateDid);
+
+      const requestInvalidateDid = new HttpClient(INVALIDATE_DID_URL(encodedDid));
+      const response = await requestInvalidateDid.post();
+
+      setInvalidationResult(response);
+      console.log("Invalidation Result:", response);
+
+      if (response.success) {
+        alert('DID invalidated successfully!');
+      } else {
+        alert(`Failed to invalidate DID: ${response.message}`);
+      }
+
+    } catch (error) {
+      console.error("Error invalidating DID:", error);
+      alert(`Error: ${error.message}`);
     }
   };
 
@@ -57,7 +114,7 @@ function App() {
         alert('Please issue a credential first');
         return;
       }
-      const requestIssueCredential = new HttpClient(ISSUE_CREDENTIAL_URL)
+      const requestIssueCredential = new HttpClient(ISSUE_CREDENTIAL_URL);
 
       // TODO: temporary data
       const subjectData = {
@@ -77,20 +134,8 @@ function App() {
         credential_type: ['UniversityDegreeCredential'],
         issuer_did: 'did:example:issuer',
         expiration_date: null
-      })
+      });
 
-      // const response = await fetch(ISSUE_CREDENTIAL_URL, {
-      //
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     subject: subjectData,
-      //     credential_type: ['UniversityDegreeCredential'],
-      //     issuer_did: 'did:example:issuer',
-      //     expiration_date: null
-      //   }),
-      // });
-      // const credentialResponse = await response.json();
       setVc(response);
       console.log("Issued Credential:", response);
 
@@ -120,7 +165,7 @@ function App() {
             ],
             purpose: 'Verification of university degree'
           }
-      )
+      );
 
       setPresentationRequest(response);
       console.log("Created Presentation Request:", response);
@@ -153,7 +198,7 @@ function App() {
             challenge: presentationRequest.challenge,
             domain: presentationRequest.domain
           }
-      )
+      );
 
       // Create a presentation response that includes both the VP and submission metadata
       // This would normally be done by your wallet application
@@ -203,7 +248,6 @@ function App() {
       const result = await response;
       setVerificationResult(response);
 
-
       if (result.is_valid) {
         alert('Presentation verified successfully!');
       } else {
@@ -237,11 +281,18 @@ function App() {
           verificationResult={verificationResult}
           createDid={createDid}
           didMethod={didMethod}
+          ethrNetwork={ethrNetwork}
+          setEthrNetwork={setEthrNetwork}
+          ethrNetworks={ethrNetworks}
           setDidMethod={setDidMethod}
           issueCredential={issueCredential}
           createPresentationRequest={createPresentationRequest}
           createPresentation={createPresentation}
           verifyPresentation={verifyPresentation}
+          invalidateDid={invalidateDid}
+          invalidationResult={invalidationResult}
+          setInvalidateDid={setInvalidateDid}
+          invalidateDidHandler={invalidateDidHandler}
           verifyAge={verifyAge}
           setAge={setAge}
       />

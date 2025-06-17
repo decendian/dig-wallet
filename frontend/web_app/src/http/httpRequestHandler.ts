@@ -110,8 +110,9 @@ export default class HttpClient {
         console.log(this.url)
         const response = await fetch(this.url, config);
 
+        // If an error occurs, we will handle it here
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.statusText}`);
+            throw new Error(`Http Status: ${await response.text()}`);
         }
 
         return response.json();
