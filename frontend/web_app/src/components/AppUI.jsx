@@ -5,7 +5,6 @@ import React from 'react';
 const AppUI = ({
   did,
   vc,
-  age,
   presentationRequest,
   presentation,
   verificationResult,
@@ -23,8 +22,6 @@ const AppUI = ({
   invalidationResult,
   setInvalidateDid,
   invalidateDidHandler,
-  verifyAge,
-  setAge
 }) => {
 
   return (
@@ -33,7 +30,7 @@ const AppUI = ({
 
         {/* Section 1: DID Creation */}
         <div className="section">
-          <h2>1. Create Decentralized Identifier (DID)</h2>
+          <h2>Create Decentralized Identifier (DID)</h2>
           <div className="method-selector">
             <label>
               DID Method:
@@ -103,7 +100,7 @@ const AppUI = ({
 
         {/* Section 2: DID Invalidation */}
         <div className="section">
-          <h2>2. Invalidate DID</h2>
+          <h2>Invalidate DID</h2>
           <input
               type="text"
               placeholder="Enter DID to invalidate (e.g., did:key:z6Mk..., did:ethr:0x..., or did:ethr:polygon:0x...)"
@@ -131,7 +128,7 @@ const AppUI = ({
 
         {/* Section 3: Credential Issuance */}
         <div className="section">
-          <h2>3. Issue Verifiable Credential (VC)</h2>
+          <h2>Issue Verifiable Credential (VC)</h2>
           <button onClick={issueCredential}>Issue Credential</button>
           {vc && (
               <div>
@@ -143,7 +140,7 @@ const AppUI = ({
 
         {/* New Section: Presentation Request */}
         <div className="section">
-          <h2>4. Create Presentation Request (Verifier)</h2>
+          <h2>Create Presentation Request (Verifier)</h2>
           <button onClick={createPresentationRequest}>Create Request</button>
           {presentationRequest && (
               <div>
@@ -155,7 +152,7 @@ const AppUI = ({
 
         {/* New Section: Create Presentation */}
         <div className="section">
-          <h2>5. Create Presentation (Holder)</h2>
+          <h2>Create Presentation (Holder)</h2>
           <button onClick={createPresentation}>Create Presentation</button>
           {presentation && (
               <div>
@@ -167,7 +164,7 @@ const AppUI = ({
 
         {/* New Section: Verify Presentation */}
         <div className="section">
-          <h2>6. Verify Presentation (Verifier)</h2>
+          <h2>Verify Presentation (Verifier)</h2>
           <button onClick={verifyPresentation}>Verify Presentation</button>
           {verificationResult && (
               <div>
@@ -175,18 +172,6 @@ const AppUI = ({
                 <pre>{JSON.stringify(verificationResult, null, 2)}</pre>
               </div>
           )}
-        </div>
-
-        {/* Section: Age Verification */}
-        <div className="section">
-          <h2>7. Age Verification (ZKP Stub)</h2>
-          <input
-              type="number"
-              placeholder="Enter your age"
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
-          />
-          <button onClick={verifyAge}>Verify Age</button>
         </div>
 
         {/* Info section */}
