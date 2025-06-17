@@ -132,7 +132,7 @@ impl DIDMethod for KeyDID {
     * Retrieves the current DID Document for an existing DID
     */
     fn resolve_did( did: &str) -> Result<DIDDocument, &'static str> {
-        // Validate DID format - support key, ethr, and web methods
+        // Validate DID format - support key method
         if !did.starts_with("did:") {
             return Err("Invalid DID: Must start with 'did:'");
         }
