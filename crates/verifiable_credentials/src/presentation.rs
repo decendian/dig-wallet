@@ -108,8 +108,8 @@ pub struct DescriptorMapping {
 pub fn create_presentation(
     holder_did: String,
     credentials: Vec<VerifiableCredential>,
-    challenge: Option<String>,
-    domain: Option<String>,
+    // challenge: Option<String>
+    // request: Option<String>,
 ) -> VerifiablePresentation {
     VerifiablePresentation {
         context: vec![
@@ -292,11 +292,11 @@ pub fn create_presentation_submission(
     definition_id: String,
     descriptor_ids: Vec<String>,
 ) -> PresentationSubmission {
-    let LDP_VAL = "ldp_vp".to_string();
+    let ldp_val = "ldp_vp".to_string();
     let mappings = descriptor_ids.iter().enumerate().map(|(index, id)| {
         DescriptorMapping {
             id: id.clone(), // Need to clone because iter() provides references
-            format: LDP_VAL.clone(),
+            format: ldp_val.clone(),
             path: format!("$.verifiableCredential[{}]", index),
         }
     }).collect();
@@ -316,7 +316,7 @@ pub mod exchange {
     #[derive(Serialize, Deserialize, Clone, Debug)]
     pub struct PresentationRequest {
         pub presentation_definition: PresentationDefinition,
-        pub challenge: String,
+        pub challenge: Option<String>,
         pub domain: Option<String>,
     }
     
@@ -352,10 +352,10 @@ pub mod exchange {
                 credential_types,
                 fields,
                 purpose,
-            None, // Add `path_prefix` argument
-            None, // Add `field_filters` argument
+            None, 
+            None, 
             ),
-            challenge,
+            challenge: Some(challenge),
             domain: None,
         }
     }
@@ -379,14 +379,14 @@ pub mod exchange {
         let mut presentation = create_presentation(
             holder_did,
             credentials.clone(),
-            Some(request.challenge.clone()),
-            request.domain.clone(),
+            // request.challenge.clone(),
+            // request.domain.clone(),
         );
         
         // Sign the presentation
         sign_presentation(
             &mut presentation,
-            Some(request.challenge.clone()),
+            request.challenge.clone(),
             request.domain.clone(),
         )?;
         
@@ -436,7 +436,7 @@ pub mod exchange {
         };
         
         // Verify the challenge matches (anti-replay)
-        if proof.challenge.as_deref() != Some(&request.challenge) {
+        if proof.challenge != request.challenge {
             return Ok(false);
         }
         

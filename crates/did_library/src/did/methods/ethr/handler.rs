@@ -10,8 +10,7 @@ use std::env;
 use ethereum_types::H160;
 use tiny_keccak::{Hasher, Keccak};
 use hex;
-use base64;
-
+use base64::{Engine as _, engine::general_purpose, DecodeError};
 pub struct EthrHandler;
 
 impl EthrHandler {
@@ -44,7 +43,7 @@ fn derive_ethereum_address(public_key: &[u8]) -> Result<String, &'static str> {
 }
 
 
-fn decode_base64url(input: &str) -> Result<Vec<u8>, base64::DecodeError> {
+fn decode_base64url(input: &str) -> Result<Vec<u8>, DecodeError> {
     // Convert base64url to base64 by replacing URL-safe characters
     let mut base64_string = input.replace('-', "+").replace('_', "/");
     
@@ -54,7 +53,7 @@ fn decode_base64url(input: &str) -> Result<Vec<u8>, base64::DecodeError> {
         base64_string.push('=');
     }
     
-    base64::decode(&base64_string)
+    general_purpose::STANDARD.decode(&base64_string)
 }
 
 // Helper function to apply EIP-55 checksumming to Ethereum address
@@ -91,7 +90,7 @@ fn checksum_address(address: &H160) -> String {
 }
 
 // Helper function to parse ethr DID and extract network and address
-fn parse_ethr_did(did: &str) -> Result<(String), &'static str> {
+fn parse_ethr_did(did: &str) -> Result<String, &'static str> {
     // Remove the "did:ethr:" prefix
     let remainder = did.strip_prefix("did:ethr:")
         .ok_or("Invalid ethr DID format")?;

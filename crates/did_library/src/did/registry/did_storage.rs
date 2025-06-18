@@ -33,7 +33,7 @@ impl DIDRegistry {
     }
 
     /// Store a DID document in the registry
-    pub fn store(&self, did_document: DIDDocument) -> Result<(), &'static str> {
+    pub fn store(&self, did_document: DIDDocument) -> Result<(), String> {
         // Clone the ID before locking to minimize lock time
         let did_id = did_document.id.clone();
 
@@ -75,7 +75,7 @@ impl DIDRegistry {
     }
 
     /// Save registry to disk
-    fn save_to_disk(&self, path: &str) -> Result<(), &'static str> {
+    fn save_to_disk(&self, path: &str) -> Result<(), String> {
         // Clone the data while holding the lock, to minimize lock time
         let serializable: IndexMap<String, DIDDocument> = {  // Change HashMap to IndexMap
             let storage = self.storage.lock().map_err(|_| {
@@ -89,8 +89,8 @@ impl DIDRegistry {
         if let Some(parent) = Path::new(path).parent() {
             match fs::create_dir_all(parent) {
                 Ok(_) => println!("Directory created/verified: {:?}", parent),
-                Err(e) => {
-                    return Err("Failed to create directory");
+                Err(error) => {
+                    return Err(format!("Failed to create: {}", error));
                 }
             }
         }
@@ -101,14 +101,14 @@ impl DIDRegistry {
                 j
             }
             Err(e) => {
-                return Err("Failed to serialize registry");
+                return Err(format!("Failed to serialize registry: {}", e));
             }
         };
 
         match fs::write(path, &json) {
             Ok(_) => println!("Successfully wrote registry to disk at: {}", path),
             Err(e) => {
-                return Err("Failed to write registry to disk");
+                return Err(format!("Failed to write registry to disk {}", e));
             }
         }
         Ok(())

@@ -92,6 +92,7 @@ fn load_config() -> Result<ServerConfig, ConfigError> {
 struct IssueCredentialRequest {
     subject: serde_json::Value,
     credential_type: Vec<String>,
+    //TODO:: Investigate why we don't use this field
     issuer_did: String,
     expiration_date: Option<String>,
 }
@@ -101,7 +102,8 @@ struct IssueCredentialRequest {
 struct CreateDIDRequest {
     // Optional method field, defaults to "key" if not provided
     method: Option<String>,
-    key_type: Option<String>,
+    //TODO:: Investigate why we don't use this field
+    _key_type: Option<String>,
     network: Option<String>,
     chain_id: Option<String>,
 }
@@ -238,8 +240,6 @@ async fn create_presentation_handler(
     let mut presentation = verifiable_credentials::presentation::create_presentation(
         req.holder_did.clone(),
         req.credentials.clone(),
-        req.challenge.clone(),
-        req.domain.clone(),
     );
 
     // Sign the presentation
@@ -293,6 +293,7 @@ async fn main() -> std::io::Result<()> {
     //TODO: Look into logging
     if let Ok(log_level) = env::var("RUST_LOG") {
         // RUST_LOG is set, use it
+        println!("Log Level: {} ", log_level);
         env_logger::init();
     } else {
         // RUST_LOG is not set, use default level

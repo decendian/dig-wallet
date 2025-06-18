@@ -1,13 +1,11 @@
 // crates/api_server/src/dto/request.rs
 
 use std::collections::HashMap;
-use std::future::{ready, Ready};
+use std::future::Ready;
 use actix_web::{FromRequest, HttpRequest, error::Error as ActixError};
 use actix_web::dev::Payload;
 use serde::{Deserialize, Serialize};
-use serde_json::Error;
 use shared::dto::DataTransferObject;
-use verifiable_credentials::dto::credential::VerifiableCredentialDTO;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 
@@ -47,7 +45,7 @@ impl FromRequest for CreateDidRequestDTO {
   type Error = ActixError;
   type Future = Ready<Result<Self, Self::Error>>;
 
-  fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
+  fn from_request(_req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
     todo!()
   }
 }

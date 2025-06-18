@@ -5,7 +5,6 @@
 
 use crate::did::core::key_utils::KeyType;
 use serde::{Deserialize, Serialize};
-use ssi::claims::chrono;
 use std::collections::HashMap;
 
 /// A structure representing a Decentralized Identifier (DID) Document.
