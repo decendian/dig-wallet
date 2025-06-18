@@ -16,7 +16,6 @@ function App() {
   const [ethrNetwork, setEthrNetwork] = useState("none"); // New state for Ethereum network
   const [did, setDid] = useState("");
   const [vc, setVc] = useState("");
-  const [age, setAge] = useState("");
   const [presentation, setPresentation] = useState(null);
   const [verificationResult, setVerificationResult] = useState(null);
   const [presentationRequest, setPresentationRequest] = useState(null);
@@ -244,7 +243,6 @@ function App() {
             presentation_response: presentation
           }
       )
-
       const result = await response;
       setVerificationResult(response);
 
@@ -259,23 +257,11 @@ function App() {
     }
   };
 
-  /**
-   * ZKP age verification stub
-   */
-  const verifyAge = () => {
-    if (parseInt(age, 10) >= 21) {
-      alert("Age verification successful!");
-    } else {
-      alert("Age verification failed. Must be 21+");
-    }
-  };
-
   // Return the UI component with all necessary props
   return (
       <AppUI
           did={did}
           vc={vc}
-          age={age}
           presentationRequest={presentationRequest}
           presentation={presentation}
           verificationResult={verificationResult}
@@ -293,8 +279,6 @@ function App() {
           invalidationResult={invalidationResult}
           setInvalidateDid={setInvalidateDid}
           invalidateDidHandler={invalidateDidHandler}
-          verifyAge={verifyAge}
-          setAge={setAge}
       />
   );
 }

@@ -114,8 +114,6 @@ pub struct CapabilityDelegation {
     pub capability_delegation: Vec<String>,
 }
 
-
-
 /// Service endpoint definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Service {
