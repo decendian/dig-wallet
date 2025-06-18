@@ -6,6 +6,7 @@ pub mod dto;
 
 use std::collections::HashMap;
 use std::fs;
+use std::thread::current;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use did_library::did::core::did_document::*;
@@ -191,13 +192,26 @@ pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredenti
         network: None,
         chain_id: None,
     };
+    
     let registry = get_registry().list_dids();
     let current_did = registry?.pop();
    
+    // Check if DID exists and handle the None case properly
+    let did_id = current_did.ok_or("No DID found in registry")?;
+    
+    // Retrieve the actual DID document to check status
+    let did_document = get_registry().get(&did_id)
+        .map_err(|e| format!("Failed to retrieve DID document: {}", e))?
+        .ok_or("DID document not found in registry")?;
+    
+    // Check if DID status is active
+    if did_document.status != "active" {
+        return Err(format!("Cannot issue credential: DID status is '{}', but must be 'active'", did_document.status));
+    }
+    
     // Create a new credential based on the request
     let mut credential = format::create_credential(
-        //TODO: deal with this unwrap, if it returns None, we should handle is properly
-        current_did.unwrap(),
+        did_id,
         request.subject,
         request.credential_type,
         request.expiration_date,
