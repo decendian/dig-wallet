@@ -108,11 +108,11 @@ function App() {
    */
   const issueCredential = async () => {
     try {
-
       if (!did) {
-        alert('Please issue a credential first');
+        alert('Please create a DID first');
         return;
       }
+      
       const requestIssueCredential = new HttpClient(ISSUE_CREDENTIAL_URL);
 
       // TODO: temporary data
@@ -137,9 +137,35 @@ function App() {
 
       setVc(response);
       console.log("Issued Credential:", response);
+      alert('Credential issued successfully!');
 
     } catch (error) {
       console.error("Error issuing credential:", error);
+      
+      // Handle different types of errors based on the response
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        
+        switch (errorData.error_type) {
+          case 'invalid_did_status':
+            alert(`❌ DID Deactivated: ${errorData.message}`);
+            break;
+          case 'missing_did':
+            alert(`❌ No DID Found: ${errorData.message}`);
+            break;
+          case 'missing_did_document':
+            alert(`❌ DID Document Error: ${errorData.message}`);
+            break;
+          case 'internal_error':
+            alert(`❌ Server Error: ${errorData.message}`);
+            break;
+          default:
+            alert(`❌ Error: ${errorData.message || 'Failed to issue credential'}`);
+        }
+      } else {
+        // Fallback for network errors or unexpected error formats
+        alert(`❌ Network Error: ${error.message || 'Failed to connect to server'}`);
+      }
     }
   };
 

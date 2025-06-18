@@ -226,12 +226,41 @@ async fn issue_credential_handler(req: web::Json<IssueCredentialRequest>) -> imp
     // Issue the credential
     match verifiable_credentials::issue_credential(request) {
         Ok(credential) => HttpResponse::Ok().json(credential),
-        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
-            "error": e
-        })),
+        Err(e) => {
+            // Check for specific DID-related errors and return appropriate HTTP status codes
+            if e.contains("DID status is") && e.contains("but must be 'active'") {
+                HttpResponse::BadRequest().json(serde_json::json!({
+                    "error": "DID_DEACTIVATED",
+                    "message": "Cannot issue credential: The DID has been deactivated and cannot be used to issue credentials.",
+                    "detailed_error": e,
+                    "error_type": "invalid_did_status"
+                }))
+            } else if e.contains("No DID found in registry") {
+                HttpResponse::BadRequest().json(serde_json::json!({
+                    "error": "NO_DID_FOUND",
+                    "message": "No DID found in the registry. Please create a DID first.",
+                    "detailed_error": e,
+                    "error_type": "missing_did"
+                }))
+            } else if e.contains("DID document not found in registry") {
+                HttpResponse::BadRequest().json(serde_json::json!({
+                    "error": "DID_DOCUMENT_NOT_FOUND",
+                    "message": "DID document could not be retrieved from the registry.",
+                    "detailed_error": e,
+                    "error_type": "missing_did_document"
+                }))
+            } else {
+                // For other errors, return 500 Internal Server Error
+                HttpResponse::InternalServerError().json(serde_json::json!({
+                    "error": "CREDENTIAL_ISSUANCE_FAILED",
+                    "message": "Failed to issue credential due to an internal error.",
+                    "detailed_error": e,
+                    "error_type": "internal_error"
+                }))
+            }
+        }
     }
 }
-
 // Add these new handlers
 async fn create_presentation_handler(
     req: web::Json<CreatePresentationRequest>,
