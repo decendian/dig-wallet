@@ -8,23 +8,23 @@ impl Web {
 }
 
 impl DIDMethod for Web {
-	fn create_did(options: DIDCreationOptions) -> DIDDocument {
+	fn create_did(_options: DIDCreationOptions) -> DIDDocument {
 		todo!()
 		}
 	
 
-	fn resolve_did(did: &str) -> Result<DIDDocument, &'static str> {
+	fn resolve_did(_did: &str) -> Result<DIDDocument, &'static str> {
 		todo!()
 	}
 
     fn update_did(
-        did: &str,
-        option: DIDCreationOptions,
+        _did: &str,
+        _option: DIDCreationOptions,
     ) -> Result<DIDDocument, &'static str> {
         todo!()
     }
 	
-	fn invalidate_did(did: &str) -> Result<DIDDocument, &'static str> {
+	fn invalidate_did(_did: &str) -> Result<DIDDocument, &'static str> {
 		todo!()
 	}
 }

@@ -69,8 +69,16 @@ pub fn get_did_registry() -> Result<Value, Box<dyn std::error::Error>> {
 
 // Public function to issue credentials
 pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredential, String> {
-
-    let option1 = DIDCreationOptions {
+    let sample_key_material = KeyMaterial::JWK {
+        public_key_jwk: serde_json::json!({
+                    "kty": "EC",
+                    "crv": "P-256",
+                    "x": base64::encode(&rand::random::<[u8; 32]>()),
+                    "y": base64::encode(&rand::random::<[u8; 32]>())
+                })
+    };
+ 
+    let _option1 = DIDCreationOptions {
         // Set key type to P256 (PS256) for digital signatures
         key_type: Some(KeyType::P256),
 
@@ -80,14 +88,7 @@ pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredenti
                 id: format!("#key-{}", uuid::Uuid::new_v4().simple()),
                 vm_type: "P256VerificationKey2021".to_string(),
                 controller: format!("did:key:{}", uuid::Uuid::new_v4().simple()),
-                key_material: KeyMaterial::JWK {
-                    public_key_jwk: serde_json::json!({
-                    "kty": "EC",
-                    "crv": "P-256",
-                    "x": base64::encode(&rand::random::<[u8; 32]>()),
-                    "y": base64::encode(&rand::random::<[u8; 32]>())
-                })
-                }
+                key_material: sample_key_material.clone()
             },
             VerificationMethod {
                 id: format!("#key-{}", uuid::Uuid::new_v4().simple()),
@@ -107,14 +108,7 @@ pub fn issue_credential(request: CredentialRequest) -> Result<VerifiableCredenti
                     id: format!("#auth-key-{}", uuid::Uuid::new_v4().simple()),
                     vm_type: "P256VerificationKey2021".to_string(),
                     controller: format!("did:key:{}", uuid::Uuid::new_v4().simple()),
-                    key_material: KeyMaterial::JWK {
-                        public_key_jwk: serde_json::json!({
-                        "kty": "EC",
-                        "crv": "P-256",
-                        "x": base64::encode(&rand::random::<[u8; 32]>()),
-                        "y": base64::encode(&rand::random::<[u8; 32]>())
-                    })
-                    }
+                    key_material: sample_key_material.clone()
                 }
             )
         ]),

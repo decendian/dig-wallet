@@ -3,10 +3,8 @@
 //! This module provides cryptographic key utilities for creating and
 //! manipulating keys used in DIDs.
 
-use base64::{Engine as _, engine::general_purpose};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use bs58;
 
 /// Supported key types
 #[derive(Debug, Clone, Serialize, Deserialize, Copy)]
@@ -62,19 +60,19 @@ pub fn hash_jwk(jwk: &serde_json::Value) -> Result<HashMap<String, String>, Stri
 }
 
 // Commented out code until we figure out what
-pub fn decode_key_type(did: &str) -> Result<KeyType, &'static str> {
+pub fn decode_key_type(_did: &str) -> Result<KeyType, &'static str> {
     // if !did.starts_with("did:key:") && !did.starts_with("did:ethr:") {
     //     return Err("Invalid DID: Unsupported DID method");
     // }
-    
+    // 
     // let encoded_key = did.replace("did:key:", "");
-    
+    // 
     // if encoded_key.is_empty() {
     //     return Err("Invalid DID: Empty key portion");
     // }
-    
+    // 
     // println!("Encoded key: '{}'", encoded_key);
-    
+    // 
     // // Try base64url decoding first (since your key appears to be base64url)
     // let decoded_bytes = match general_purpose::URL_SAFE_NO_PAD.decode(&encoded_key) {
     //     Ok(bytes) => {
@@ -89,7 +87,7 @@ pub fn decode_key_type(did: &str) -> Result<KeyType, &'static str> {
     //             .map_err(|_| "Invalid DID: Failed to decode both base64url and base58")?
     //     }
     // };
-    
+    // 
     // println!("Decoded bytes length: {}", decoded_bytes.len());
     // if decoded_bytes.len() >= 2 {
     //     println!("First two bytes: [{:02x}, {:02x}]", decoded_bytes[0], decoded_bytes[1]);
@@ -98,7 +96,7 @@ pub fn decode_key_type(did: &str) -> Result<KeyType, &'static str> {
     // if decoded_bytes.len() < 2 {
     //     return Err("Invalid DID: Decoded key too short");
     // }
-    
+    // 
     // // First, try multicodec prefixes
     // match &decoded_bytes[..2] {
     //     [0xed, 0x01] => return Ok(KeyType::Ed25519),
@@ -108,7 +106,7 @@ pub fn decode_key_type(did: &str) -> Result<KeyType, &'static str> {
     //         println!("No multicodec prefix found, checking raw key lengths...");
     //     }
     // }
-    
+    // 
     // // If no multicodec prefix, check by key length (raw keys)
     // match decoded_bytes.len() {
     //     32 => {
@@ -133,138 +131,135 @@ pub fn decode_key_type(did: &str) -> Result<KeyType, &'static str> {
     todo!()
 }
 
-
-/// A private key used for signing
-#[derive(Debug)]
-pub struct PrivateKey {
-    /// Key type
-    pub key_type: String,
-
-    /// Raw key bytes (sensitive)
-    key_bytes: Vec<u8>,
-}
-
-impl PublicKey {
-    /// Create a new public key
-    pub fn new(key_type: &str, key_bytes: Vec<u8>) -> Self {
-        PublicKey {
-            key_type: key_type.to_string(),
-            key_bytes,
-        }
-    }
-
-    /// Convert to base64 representation
-    pub fn to_base64(&self) -> String {
-        base64::engine::general_purpose::STANDARD.encode(&self.key_bytes)
-    }
-
-    /// Convert to hex representation
-    pub fn to_hex(&self) -> String {
-        self.key_bytes
-            .iter()
-            .map(|b| format!("{:02x}", b))
-            .collect()
-    }
-
-    /// Verify a signature against the given message
-    pub fn verify(&self, message: &[u8], signature: &[u8]) -> bool {
-        //     match self.key_type.as_str() {
-        //         "Ed25519" => {
-        //             if let Ok(key) = signature::new(
-        //                 &signature::ED25519,
-        //                 &self.key_bytes
-        //             ).verify(message, signature) {
-        //                 return true;
-        //             }
-        //             false
-        //         },
-        //         // Other key types would have implementations here
-        //         _ => false,
-        //     }
-        // }
-        true
-    }
-}
-
-impl PrivateKey {
-    /// Create a new private key
-    pub fn new(key_type: &str, key_bytes: Vec<u8>) -> Self {
-        PrivateKey {
-            key_type: key_type.to_string(),
-            key_bytes,
-        }
-    }
-
-    /// Generate a new private key of the specified type
-    pub fn generate(key_type: KeyType) -> Result<Self, &'static str> {
-        // match key_type {
-        //     KeyType::Ed25519 => {
-        //         // Generate a new Ed25519 keypair
-        //         let rng = rand::SystemRandom::new();
-        //         let pkcs8_bytes = signature::Ed25519KeyPair::generate_pkcs8(&rng)
-        //             .map_err(|_| "Failed to generate Ed25519 key")?;
-        //
-        //         Ok(PrivateKey {
-        //             key_type: "Ed25519".to_string(),
-        //             key_bytes: pkcs8_bytes.as_ref().to_vec(),
-        //         })
-        //     },
-        //     KeyType::Secp256k1 => {
-        //         // For Secp256k1, we would use a different generation method
-        //         // This is a placeholder implementation - in a real system, use a proper secp256k1 library
-        //         let mut bytes = [0u8; 32];
-        //         let rng = rand::SystemRandom::new();
-        //         rng.fill(&mut bytes).map_err(|_| "Failed to generate random bytes")?;
-        //
-        //         Ok(PrivateKey {
-        //             key_type: "Secp256k1".to_string(),
-        //             key_bytes: bytes.to_vec(),
-        //         })
-        //     },
-        //     KeyType::P256 => {
-        //         // For P256, this is a placeholder implementation
-        //         // In a real system, use a proper P-256 library
-        //         let mut bytes = [0u8; 32];
-        //         let rng = rand::SystemRandom::new();
-        //         rng.fill(&mut bytes).map_err(|_| "Failed to generate random bytes")?;
-        //
-        //         Ok(PrivateKey {
-        //             key_type: "P256".to_string(),
-        //             key_bytes: bytes.to_vec(),
-        //         })
-        //     },
-        // }
-        todo!()
-    }
-
-    /// Get the corresponding public key
-    pub fn public_key(&self) -> Result<PublicKey, &'static str> {
-        // match self.key_type.as_str() {
-        //     "Ed25519" => {
-        //         let key_pair = signature::Ed25519KeyPair::from_pkcs8(&self.key_bytes)
-        //             .map_err(|_| "Invalid Ed25519 key")?;
-        //
-        //         Ok(PublicKey {
-        //             key_type: "Ed25519".to_string(),
-        //             key_bytes: key_pair.public_key().as_ref().to_vec(),
-        //         })
-        //     },
-        //     _ => Err("Key type not implemented"),
-        // }
-        todo!()
-    }
-
-    /// Sign a message
-    pub fn sign(&self, message: &[u8]) -> Result<Vec<u8>, &'static str> {
-        // match self.key_type.as_str() {
-        //     "Ed25519" => {
-        //         let key_pair = signature::Ed25519KeyPair::from_pkcs8(&self.key_bytes)
-        //             .map_err(|_| "Invalid Ed25519 key")?;
-        //
-        //         Ok(key_pair.sign(message).as_ref().to_vec())
-        //     },
-        //     _ => Err("Key type not implemented"),
-        // }
-        todo!()
-    }
-}
+// TODO: As of right now, we use the SSI library to generate standardized key pairs. This is most likely
+// deprecated, kept in till make the final decision on whether we want to generate our own key pairs
+// 
+//// A private key used for signing
+// #[derive(Debug)]
+// pub struct PrivateKey {
+//     /// Key type
+//     pub key_type: String,
+//     key_bytes: Vec<u8>
+// }
+// 
+// impl PublicKey {
+//     /// Create a new public key
+//     pub fn new(key_type: &str, key_bytes: Vec<u8>) -> Self {
+//         PublicKey {
+//             key_type: key_type.to_string(),
+//             key_bytes,
+//         }
+//     }
+// 
+//     /// Convert to base64 representation
+//     pub fn to_base64(&self) -> String {
+//         base64::engine::general_purpose::STANDARD.encode(&self.key_bytes)
+//     }
+// 
+//     /// Convert to hex representation
+//     pub fn to_hex(&self) -> String {
+//         self.key_bytes
+//             .iter()
+//             .map(|b| format!("{:02x}", b))
+//             .collect()
+//     }
+// 
+//     /// Verify a signature against the given message
+//     pub fn verify(&self, _message: &[u8], _signature: &[u8]) -> bool {
+//             match self.key_type.as_str() {
+//                 "Ed25519" => {
+//                     if let Ok(key) = signature::new(
+//                         &signature::ED25519,
+//                         &self.key_bytes
+//                     ).verify(message, signature) {
+//                         return true;
+//                     }
+//                     false
+//                 },
+//                 // Other key types would have implementations here
+//                 _ => false,
+//             }
+//         }
+//         true
+//     }
+// }
+// 
+// impl PrivateKey {
+//     /// Create a new private key
+//     pub fn new(key_type: &str, key_bytes: Vec<u8>) -> Self {
+//         PrivateKey {
+//             key_type: key_type.to_string(),
+//             key_bytes,
+//         }
+//     }
+//     
+//     /// Generate a new private key of the specified type
+//     pub fn generate(_key_type: KeyType) -> Result<Self, &'static str> {
+//         match key_type {
+//             KeyType::Ed25519 => {
+//                 // Generate a new Ed25519 keypair
+//                 let rng = rand::SystemRandom::new();
+//                 let pkcs8_bytes = signature::Ed25519KeyPair::generate_pkcs8(&rng)
+//                     .map_err(|_| "Failed to generate Ed25519 key")?;
+//         
+//                 Ok(PrivateKey {
+//                     key_type: "Ed25519".to_string(),
+//                     key_bytes: pkcs8_bytes.as_ref().to_vec(),
+//                 })
+//             },
+//             KeyType::Secp256k1 => {
+//                 // For Secp256k1, we would use a different generation method
+//                 // This is a placeholder implementation - in a real system, use a proper secp256k1 library
+//                 let mut bytes = [0u8; 32];
+//                 let rng = rand::SystemRandom::new();
+//                 rng.fill(&mut bytes).map_err(|_| "Failed to generate random bytes")?;
+//         
+//                 Ok(PrivateKey {
+//                     key_type: "Secp256k1".to_string(),
+//                     key_bytes: bytes.to_vec(),
+//                 })
+//             },
+//             KeyType::P256 => {
+//                 // For P256, this is a placeholder implementation
+//                 // In a real system, use a proper P-256 library
+//                 let mut bytes = [0u8; 32];
+//                 let rng = rand::SystemRandom::new();
+//                 rng.fill(&mut bytes).map_err(|_| "Failed to generate random bytes")?;
+//         
+//                 Ok(PrivateKey {
+//                     key_type: "P256".to_string(),
+//                     key_bytes: bytes.to_vec(),
+//                 })
+//             },
+//         }
+//     }
+// 
+//     /// Get the corresponding public key
+//     pub fn public_key(&self) -> Result<PublicKey, &'static str> {
+//         match self.key_type.as_str() {
+//             "Ed25519" => {
+//                 let key_pair = signature::ed::from_pkcs8(&self.key_bytes)
+//                     .map_err(|_| "Invalid Ed25519 key")?;
+//         
+//                 Ok(PublicKey {
+//                     key_type: "Ed25519".to_string(),
+//                     key_bytes: key_pair.public_key().as_ref().to_vec(),
+//                 })
+//             },
+//             _ => Err("Key type not implemented"),
+//         }
+//     }
+// 
+//     /// Sign a message
+//     pub fn sign(&self, _message: &[u8]) -> Result<Vec<u8>, &'static str> {
+//         match self.key_type.as_str() {
+//             "Ed25519" => {
+//                 let key_pair = signature::Ed25519KeyPair::from_pkcs8(&self.key_bytes)
+//                     .map_err(|_| "Invalid Ed25519 key")?;
+//         
+//                 Ok(key_pair.sign(message).as_ref().to_vec())
+//             },
+//             _ => Err("Key type not implemented"),
+//         }
+//     }
+// }
