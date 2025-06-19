@@ -158,6 +158,12 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
     HttpResponse::Ok().json(document)
 }
 
+#[derive(Deserialize)]
+struct InvalidateDIDRequest {
+    expected_network: Option<String>,
+}
+
+/// Handler for invalidating a DID
 /// Handler for invalidating a DID
 async fn invalidate_did_handler(path: web::Path<String>) -> impl Responder {
     let did = path.into_inner();
@@ -167,7 +173,7 @@ async fn invalidate_did_handler(path: web::Path<String>) -> impl Responder {
         // Create a new KeyDID instance for key DIDs
         KeyDID::invalidate_did(&did)
     } else if did.starts_with("did:ethr:") {
-        // Create a new EthrHandler instance for Ethereum DIDs
+        // Create a new EthrHandler instance for Ethereum DIDs (now with network validation)
         EthrHandler::invalidate_did(&did)
     } else {
         // Unsupported DID method
@@ -180,11 +186,59 @@ async fn invalidate_did_handler(path: web::Path<String>) -> impl Responder {
             message: "DID successfully invalidated".to_string(),
             document: Some(document),
         }),
-        Err(error) => HttpResponse::BadRequest().json(DIDOperationResponse {
-            success: false,
-            message: error.to_string(),
-            document: None,
-        }),
+        Err(error) => {
+            // Handle different error types with appropriate HTTP status codes
+            match error {
+                e if e.contains("unsupported network") => {
+                    HttpResponse::BadRequest().json(serde_json::json!({
+                        "success": false,
+                        "message": error,
+                        "error_type": "unsupported_network",
+                        "document": null
+                    }))
+                },
+                e if e.contains("Invalid DID") => {
+                    HttpResponse::BadRequest().json(serde_json::json!({
+                        "success": false,
+                        "message": error,
+                        "error_type": "invalid_did",
+                        "document": null
+                    }))
+                },
+                e if e.contains("malformed") => {
+                    HttpResponse::BadRequest().json(serde_json::json!({
+                        "success": false,
+                        "message": error,
+                        "error_type": "malformed_address",
+                        "document": null
+                    }))
+                },
+                e if e.contains("already inactive") => {
+                    HttpResponse::Conflict().json(serde_json::json!({
+                        "success": false,
+                        "message": error,
+                        "error_type": "already_inactive",
+                        "document": null
+                    }))
+                },
+                e if e.contains("DID not found") => {
+                    HttpResponse::NotFound().json(serde_json::json!({
+                        "success": false,
+                        "message": error,
+                        "error_type": "did_not_found",
+                        "document": null
+                    }))
+                },
+                _ => {
+                    HttpResponse::InternalServerError().json(serde_json::json!({
+                        "success": false,
+                        "message": error,
+                        "error_type": "internal_error",
+                        "document": null
+                    }))
+                }
+            }
+        }
     }
 }
 

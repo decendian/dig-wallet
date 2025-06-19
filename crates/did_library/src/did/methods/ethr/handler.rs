@@ -11,6 +11,7 @@ use ethereum_types::H160;
 use tiny_keccak::{Hasher, Keccak};
 use hex;
 use base64::{Engine as _, engine::general_purpose, DecodeError};
+use std::collections::HashSet;
 pub struct EthrHandler;
 
 impl EthrHandler {
@@ -374,16 +375,71 @@ impl DIDMethod for EthrHandler {
     }
 
     /**
-     * Invalidates (deactivates) an existing Ethereum DID
+     * Invalidates (deactivates) an existing Ethereum DID with network validation
      */
     fn invalidate_did(did: &str) -> Result<DIDDocument, &'static str> {
+        // Define valid networks based on your frontend ethrNetworks
+        let valid_networks: HashSet<&str> = [
+            "none",      // Default mainnet - creates did:ethr:0x... format
+            "mainnet",   // Explicit mainnet - creates did:ethr:mainnet:0x... format  
+            "polygon",
+            "sepolia", 
+            "bsc",
+            "arbitrum",
+            "optimism", 
+            "base",
+            "avalanche"
+        ].iter().cloned().collect();
+
         // Validate DID format - only accept Ethereum DIDs
         if !did.starts_with("did:ethr:") {
             return Err("Invalid DID: only Ethereum DID method is supported");
         }
 
-        // Resolve existing document
-        let mut document = EthrHandler::resolve_did(did)?;
+        // Parse the DID to extract network and address parts
+        let did_parts: Vec<&str> = did.split(':').collect();
+        
+        // DID format validation
+        if did_parts.len() < 3 {
+            return Err("Invalid DID format");
+        }
+
+        let (network, address_part) = if did_parts.len() == 3 {
+            // Format: did:ethr:0x... (default mainnet)
+            ("none", did_parts[2])
+        } else if did_parts.len() == 4 {
+            // Format: did:ethr:network:0x...
+            (did_parts[2], did_parts[3])
+        } else {
+            return Err("Invalid DID format: too many segments");
+        };
+
+        // Validate that the network in the DID is supported
+        if !valid_networks.contains(network) {
+            return Err("Invalid DID: unsupported network");
+        }
+
+        // Validate address format (should start with 0x and be hex)
+        if !address_part.starts_with("0x") || address_part.len() != 42 {
+            return Err("Invalid DID: malformed Ethereum address");
+        }
+        
+        // Check if address contains only valid hex characters
+        if !address_part[2..].chars().all(|c| c.is_ascii_hexdigit()) {
+            return Err("Invalid DID: address contains non-hex characters");
+        }
+
+        // First, check if this exact DID exists in the registry
+        let registry = crate::did::registry::get_registry();
+        let existing_dids = registry.list_dids().map_err(|_| "Failed to access registry")?;
+        
+        if !existing_dids.contains(&did.to_string()) {
+            return Err("DID not found in registry");
+        }
+
+        // Double-check by trying to retrieve the document from registry
+        let document_option = registry.get(did).map_err(|_| "Failed to retrieve DID from registry")?;
+        let mut document = document_option.ok_or("DID not found in registry")?;
 
         // Check if already inactive
         if document.status != "active" {
@@ -402,6 +458,8 @@ impl DIDMethod for EthrHandler {
             eprintln!("Failed to store deactivated Ethereum DID in registry: {}", err);
             return Err("Failed to store deactivated DID");
         }
+        
         Ok(document)
     }
+
 }
