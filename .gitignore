@@ -36,3 +36,4 @@ target
 /frontend/yarn-debug.log*
 /frontend/yarn-error.log*
 
+/crates/did_library/resources
