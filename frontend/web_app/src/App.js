@@ -77,14 +77,12 @@ function App() {
 
   const invalidateDidHandler = async () => {
     try {
-
       if (!invalidateDid) {
         alert('Please enter a DID to invalidate');
         return;
       }
 
       const encodedDid = encodeURIComponent(invalidateDid);
-
       const requestInvalidateDid = new HttpClient(INVALIDATE_DID_URL(encodedDid));
       const response = await requestInvalidateDid.post();
 
@@ -99,7 +97,33 @@ function App() {
 
     } catch (error) {
       console.error("Error invalidating DID:", error);
-      alert(`Error: ${error.message}`);
+      
+      // Handle specific error types
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        
+        switch (errorData.error_type) {
+          case 'unsupported_network':
+            alert(`❌ Unsupported Network: The network specified in the DID is not supported.`);
+            break;
+          case 'invalid_did':
+            alert(`❌ Invalid DID: ${errorData.message}`);
+            break;
+          case 'malformed_address':
+            alert(`❌ Malformed Address: The Ethereum address in the DID is invalid.`);
+            break;
+          case 'already_inactive':
+            alert(`⚠️ Already Inactive: This DID has already been deactivated.`);
+            break;
+          case 'did_not_found':
+            alert(`❌ DID Not Found: The specified DID could not be found.`);
+            break;
+          default:
+            alert(`❌ Error: ${errorData.message || 'Failed to invalidate DID'}`);
+        }
+      } else {
+        alert(`❌ Network Error: ${error.message || 'Failed to connect to server'}`);
+      }
     }
   };
 
