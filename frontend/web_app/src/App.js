@@ -48,12 +48,12 @@ function App() {
     KEY_METHOD: 'key',
   };
 
-
     /**
    * createDid simulates the creation of a Decentralized Identifier.
    */
   const createDid = async () => {
     try {
+
       const requestCreateDid = new HttpClient(CREATE_DID_URL)
       const requestBody = {
         method: didMethod,
@@ -61,12 +61,15 @@ function App() {
         network: String,
         chainId: Number
       }
+
       if (didMethod === didMethods.ETHR_METHOD) {
         const selectedNetwork = ethrNetworks.find(network => network.value === ethrNetwork);
         requestBody.network = ethrNetwork;
         requestBody.chainId = selectedNetwork.chainId;
       }
+
       const response = await requestCreateDid.post(requestBody);
+
       setDid(response);
       console.log("Created DID:", response)
 

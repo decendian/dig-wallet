@@ -29,10 +29,7 @@ export function createDidRequest(
  * @returns True if valid, false otherwise
  */
 export function validateDidRequest(request: CreateDidRequestDTO): boolean {
-    if (!request.method || request.method.trim() === '') {
-        return false;
-    }
-    return true;
+    return !(!request.method || request.method.trim() === '');
 }
 
 /**
