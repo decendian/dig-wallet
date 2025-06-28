@@ -28,12 +28,17 @@ target
 
 # misc
 /frontend/.DS_Store
-/frontend/.env.local
-/frontend/.env.development.local
-/frontend/.env.test.local
-/frontend/.env.production.local
+/frontend/web_app/.env
 
+#/frontend/.env.local
+#/frontend/.env.development.local
+#/frontend/.env.test.local
+#/frontend/.env.production.local
+#
 /frontend/npm-debug.log*
 /frontend/yarn-debug.log*
 /frontend/yarn-error.log*
 
+/crates/did_library/resources*
+/crates/.env
+/frontend/.env

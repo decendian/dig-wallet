@@ -92,7 +92,7 @@ fn load_config() -> Result<ServerConfig, ConfigError> {
 struct IssueCredentialRequest {
     subject: serde_json::Value,
     credential_type: Vec<String>,
-    //TODO:: Investigate why we don't use this field
+    // TODO: Investigate why we don't use this field
     issuer_did: String,
     expiration_date: Option<String>,
 }
@@ -102,7 +102,7 @@ struct IssueCredentialRequest {
 struct CreateDIDRequest {
     // Optional method field, defaults to "key" if not provided
     method: Option<String>,
-    //TODO:: Investigate why we don't use this field
+    // TODO: Investigate why we don't use this field
     _key_type: Option<String>,
     network: Option<String>,
     chain_id: Option<String>,
