@@ -1,0 +1,30 @@
+# Build stage
+FROM rust:slim AS builder
+
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    build-essential \
+    ca-certificates \
+    curl \
+ && rm -rf /var/lib/apt/lists/*
+
+# Set root working directory
+WORKDIR /app
+
+# Copy full project
+COPY . .
+
+# Build from workspace root, specifying the binary
+RUN cargo build --release --bin api_server
+
+# Runtime stage (for now using slim base for debugging)
+FROM debian:bookworm-slim
+
+COPY --from=builder /app/target/release/api_server /usr/local/bin/api_server
+COPY ./did_library/resources /did_library/resources
+
+ENV DID_REGISTRY_PATH="/did_library/resources/did_registry.json"
+EXPOSE 8080
+
+CMD ["api_server"]
