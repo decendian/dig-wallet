@@ -9,7 +9,6 @@ target
 /dataSources/
 /dataSources.local.xml
 /crates/did_library/resources
-/crates/verifiable_credentials/did_library
 
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
