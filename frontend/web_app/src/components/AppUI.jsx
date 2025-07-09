@@ -57,21 +57,31 @@ const AppUI = ({
                       </option>
                     ))}
                   </select>
-                  
-                  <div className="info-box">
-                    <p className="info-title">
-                      Selected: {ethrNetworks.find(n => n.value === ethrNetwork)?.label}
-                      {ethrNetworks.find(n => n.value === ethrNetwork)?.chainId && 
-                        ` (Chain ID: ${ethrNetworks.find(n => n.value === ethrNetwork)?.chainId})`
-                      }
-                    </p>
-                    <p className="info-detail">
-                      {ethrNetwork === 'none' 
-                        ? "Will create: did:ethr:0x... (classic format, defaults to mainnet)"
-                        : `Will create: did:ethr:${ethrNetwork}:0x... (network-specific format)`
-                      }
-                    </p>
-                  </div>
+
+                  {
+                    () => {
+                      return (
+                          <>
+                            <div className="info-box">
+
+                              <p className="info-title">
+                                Selected: {ethrNetworks.find(n => n.value === ethrNetwork)?.label}
+                                {ethrNetworks.find(n => n.value === ethrNetwork)?.chainId &&
+                                    ` (Chain ID: ${ethrNetworks.find(n => n.value === ethrNetwork)?.chainId})`
+                                }
+                              </p>
+
+                              <p className="info-detail">
+                                {ethrNetwork === 'none'
+                                    ? "Will create: did:ethr:0x... (classic format, defaults to mainnet)"
+                                    : `Will create: did:ethr:${ethrNetwork}:0x... (network-specific format)`
+                                }
+                              </p>
+                            </div>
+                          </>
+                      );
+                    }
+                  }
                 </div>
               )}
 
@@ -81,7 +91,7 @@ const AppUI = ({
               >
                 Create {didMethod === "ethr" ?
                   (ethrNetwork === "none" ? "Default Ethereum " : `${ethrNetworks.find(n => n.value === ethrNetwork)?.label} `)
-                  : ""}DID
+                  : "" }DID
               </button>
             </div>
 
