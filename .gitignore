@@ -33,11 +33,10 @@ target
 #/frontend/.env.development.local
 #/frontend/.env.test.local
 #/frontend/.env.production.local
-#
+
 /frontend/npm-debug.log*
 /frontend/yarn-debug.log*
 /frontend/yarn-error.log*
 
 /crates/did_library/resources*
 /crates/.env
-/frontend/.env

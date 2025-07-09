@@ -84,6 +84,7 @@ mod integration_tests {
     }
 
     #[test]
+#[test]
     fn test_full_credential_workflow() {
         // 1. Create a credential
         let subject = CredentialSubject {
@@ -116,14 +117,49 @@ mod integration_tests {
         assert_eq!(presentation.verifiable_credential.len(), 1);
         assert_eq!(presentation.verifiable_credential[0].id, credential.id);
         
-        // 4. Test serialization of the entire flow
+        // 4. Test serialization with data integrity verification
         let cred_json = serde_json::to_string(&credential).unwrap();
         let pres_json = serde_json::to_string(&presentation).unwrap();
         
-        let _cred_deserialized: VerifiableCredential = serde_json::from_str(&cred_json).unwrap();
-        let _pres_deserialized: VerifiablePresentation = serde_json::from_str(&pres_json).unwrap();
+        let cred_deserialized: VerifiableCredential = serde_json::from_str(&cred_json).unwrap();
+        let pres_deserialized: VerifiablePresentation = serde_json::from_str(&pres_json).unwrap();
+        
+        // Verify credential data integrity after serialization roundtrip
+        assert_eq!(credential.id, cred_deserialized.id);
+        assert_eq!(credential.issuer, cred_deserialized.issuer);
+        assert_eq!(credential.type_, cred_deserialized.type_);
+        assert_eq!(credential.issuance_date, cred_deserialized.issuance_date);
+        assert_eq!(credential.expiration_date, cred_deserialized.expiration_date);
+        assert_eq!(credential.credential_subject.name, cred_deserialized.credential_subject.name);
+        assert_eq!(credential.credential_subject.id, cred_deserialized.credential_subject.id);
+        assert_eq!(credential.credential_subject.attributes, cred_deserialized.credential_subject.attributes);
+        
+        // Verify proof integrity
+        assert_eq!(credential.proof.is_some(), cred_deserialized.proof.is_some());
+        if let (Some(original_proof), Some(deserialized_proof)) = (&credential.proof, &cred_deserialized.proof) {
+            assert_eq!(original_proof.type_, deserialized_proof.type_);
+            assert_eq!(original_proof.created, deserialized_proof.created);
+            assert_eq!(original_proof.verification_method, deserialized_proof.verification_method);
+            assert_eq!(original_proof.proof_purpose, deserialized_proof.proof_purpose);
+            assert_eq!(original_proof.proof_value, deserialized_proof.proof_value);
+        }
+        
+        // Verify presentation data integrity after serialization roundtrip
+        assert_eq!(presentation.id, pres_deserialized.id);
+        assert_eq!(presentation.holder, pres_deserialized.holder);
+        assert_eq!(presentation.type_, pres_deserialized.type_);
+        assert_eq!(presentation.context, pres_deserialized.context);
+        assert_eq!(presentation.verifiable_credential.len(), pres_deserialized.verifiable_credential.len());
+        
+        // Verify the credential within the presentation is intact
+        let orig_cred_in_pres = &presentation.verifiable_credential[0];
+        let deser_cred_in_pres = &pres_deserialized.verifiable_credential[0];
+        assert_eq!(orig_cred_in_pres.id, deser_cred_in_pres.id);
+        assert_eq!(orig_cred_in_pres.issuer, deser_cred_in_pres.issuer);
+        assert_eq!(orig_cred_in_pres.credential_subject.name, deser_cred_in_pres.credential_subject.name);
+        assert_eq!(orig_cred_in_pres.credential_subject.attributes, deser_cred_in_pres.credential_subject.attributes);
     }
-
+    
     #[test]
     fn test_presentation_exchange_workflow() {
         use verifiable_credentials::presentation::exchange::*;

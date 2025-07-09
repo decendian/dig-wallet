@@ -4,8 +4,8 @@ services:
   # Backend API Server
   api_server:
     build:
-      context: .
-      dockerfile: crates/api_server/Dockerfile
+      context: ./crates
+      dockerfile: Dockerfile
     container_name: dig-security-api
     ports:
       - "8080:8080"
@@ -19,12 +19,6 @@ services:
     restart: unless-stopped
     networks:
       - dig_security_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/did/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
   # Frontend Web App
   web_app:
@@ -35,8 +29,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_API_URL=http://api_server:8080/api
-      - NODE_ENV=production
+      - REACT_APP_API_URL=http://localhost:8080/api
+      - NODE_ENV=development
     depends_on:
       - api_server
     restart: unless-stopped
