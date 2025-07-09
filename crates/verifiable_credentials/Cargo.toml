@@ -17,5 +17,36 @@ rand = "0.7.3"           # Must match what ed25519-dalek expects
 base64 = "0.13.0"
 sha2 = "0.9.8"
 
+[dev-dependencies]
+# For JSON serialization testing
+serde_json = "1.0"
+
+# For date/time testing
+chrono = { version = "0.4", features = ["serde"] }
+
+# For async testing if needed
+tokio-test = "0.4"
+
 [lib]
 path = "src/lib.rs"
+
+# Test configuration
+[[test]]
+name = "dto_tests"
+path = "tests/dto_tests.rs"
+
+[[test]]
+name = "keys_tests"
+path = "tests/keys_tests.rs"
+
+[[test]]
+name = "format_tests"
+path = "tests/format_tests.rs"
+
+[[test]]
+name = "presentation_tests"
+path = "tests/presentation_tests.rs"
+
+[[test]]
+name = "integration_tests"
+path = "tests/integration_tests.rs"

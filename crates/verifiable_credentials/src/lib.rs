@@ -1,4 +1,5 @@
 // This is the main entry point for the crate
+// src/lib.rs
 pub mod format;
 pub mod keys;
 pub mod presentation;
