@@ -3,7 +3,7 @@ run-name: ${{github.actor}} triggered CI pipeline
 on: [push]
 
 jobs:
-  build:
+  Build-And-Test:
     run-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
