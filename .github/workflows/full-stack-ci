@@ -1,12 +1,6 @@
 name: Full Stack CI
 run-name: ${{github.actor}} triggered CI pipeline 
-on: 
-  push:
-    branches:
-      - dev
-  pull_request:
-    branches:
-      - dev
+on: [push]
 
 jobs:
   build:
