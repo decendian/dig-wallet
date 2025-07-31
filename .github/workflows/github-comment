@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps: 
-      - name: Add reminder to add ticket to Jira
+      - name: Reminder to add ticket to Jira
         run: gh issue comment $ISSUE -b "Make sure to put this ticket into Jira and ideally assign to the appropriate user"
         
     env:
