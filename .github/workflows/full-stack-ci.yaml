@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   Build-And-Test:
-    run-on: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
 
