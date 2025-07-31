@@ -9,10 +9,10 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: docker compose build and create
-    - run: docker compose up -d --build
+      run: docker compose up -d --build
   
     - name: Run tests
-    - run: docker compose exec backend cargo test
+      run: docker compose exec backend cargo test
 
     - name: Tear down
       if: always()
