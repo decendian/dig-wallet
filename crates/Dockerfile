@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     ca-certificates \
     curl \
- && rm -rf /var/lib/apt/lists/*
+    libssl3 ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set root working directory
 WORKDIR /app
