@@ -23,13 +23,14 @@ RUN cargo build --release --bin api_server
 FROM debian:bookworm-slim
 
 COPY --from=builder /app/target/release/api_server /usr/local/bin/api_server
-RUN if ["$(ls -A /did_library/resources)"]; then \
-        echo "Copying non-empty resources..."; \
-        cp -r  /did_library/resources /did_library/resources \
+RUN if [ "$(ls -A /did_library/resources)" ]; then \
+      echo "Copying non-empty resources..."; \
+      cp -r /did_library/resources /somewhere/else; \
     else \
-        echo "Resources is empty. Skipping..." \
+      echo "Resources is empty. Skipping..."; \
     fi
- ENV DID_REGISTRY_PATH="/did_library/resources/did_registry.json"
-EXPOSE 8080
+ 
+ENV DID_REGISTRY_PATH="/did_library/resources/did_registry.json"
 
+EXPOSE 8080
 CMD ["api_server"]
