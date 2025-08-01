@@ -7,12 +7,7 @@ on:
 jobs:
   comment: 
     runs-on: ubuntu-latest
-<<<<<<< HEAD
-  permissions:
-    issues: write
-=======
 
->>>>>>> dev
     steps: 
       - name: Reminder to add ticket to Jira
         run: gh issue comment $ISSUE -b "Make sure to put this ticket into Jira and ideally assign to the appropriate user"
