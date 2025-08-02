@@ -145,7 +145,6 @@ impl DIDMethod for KeyDID {
 
         // First, try to retrieve from registry
         let registry_path = env::var("DID_REGISTRY_PATH").unwrap_or_default();
-        println!("DID_REGISTRY_PATH: {}", registry_path);
         crate::did::registry::init_registry(Some(registry_path));
         
         if let Ok(Some(stored_document)) = crate::did::registry::get_registry().get(did) {
