@@ -23,7 +23,3 @@ jobs:
     - name: Tear down
       if: always()
       run: docker compose down
-    
-
-
-
