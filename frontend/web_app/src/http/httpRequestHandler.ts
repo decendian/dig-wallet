@@ -107,6 +107,7 @@ export default class HttpClient {
 
     public async request<T>(config: RequestInit): Promise<T> {
 
+        console.log(this.url)
         const response = await fetch(this.url, config);
 
         // If an error occurs, we will handle it here
@@ -129,6 +130,7 @@ export default class HttpClient {
             requestBuilder.body(data);
         }
 
+        console.log(requestBuilder.build())
         return this.request<T>(requestBuilder.build());
     }
 
