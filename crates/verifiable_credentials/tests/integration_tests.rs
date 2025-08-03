@@ -4,6 +4,7 @@ use verifiable_credentials::format::*;
 use verifiable_credentials::presentation::*;
 use did_library::did::core::key_utils::KeyType;
 use chrono::Utc;
+use std::collections::HashMap;
 
 #[cfg(test)]
 mod integration_tests {
@@ -84,7 +85,6 @@ mod integration_tests {
     }
 
     #[test]
-#[test]
     fn test_full_credential_workflow() {
         // 1. Create a credential
         let subject = CredentialSubject {
@@ -340,8 +340,6 @@ mod integration_tests {
   
 #[test]
     fn test_complex_presentation_exchange() {
-        use verifiable_credentials::presentation::exchange::*;
-        use std::collections::HashMap;
 
         // Create a complex presentation definition with filters
         let credential_types = vec!["UniversityDegree".to_string(), "EmploymentCredential".to_string()];

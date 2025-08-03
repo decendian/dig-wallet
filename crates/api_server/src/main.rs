@@ -93,7 +93,7 @@ struct IssueCredentialRequest {
     subject: serde_json::Value,
     credential_type: Vec<String>,
     // TODO: Investigate why we don't use this field
-    issuer_did: String,
+    // issuer_did: String,
     expiration_date: Option<String>,
 }
 
@@ -160,7 +160,7 @@ async fn create_did_handler(req: web::Json<CreateDIDRequest>) -> impl Responder 
 
 #[derive(Deserialize)]
 struct InvalidateDIDRequest {
-    expected_network: Option<String>,
+    // expected_network: Option<String>,
 }
 
 /// Handler for invalidating a DID

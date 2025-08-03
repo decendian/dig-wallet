@@ -2,7 +2,7 @@ use std::env;
 use crate::did::core::did_document::*;
 use crate::did::core::key_utils::*;
 use crate::did::core::traits::DIDMethod;
-use ssi::jwk::JWK;
+use ssi_jwk::JWK;
 use dotenv::dotenv;
 use crate::did::methods::ethr::handler::EthrHandler;
 
@@ -117,9 +117,9 @@ impl DIDMethod for KeyDID {
             document.add_service(&services);
         }
         // Initialize the storage solutions and store the created document
-        // let registry_path = env::var("DID_REGISTRY_PATH").unwrap();
         dotenv().ok();
-        crate::did::registry::init_registry(Some(env::var("DID_REGISTRY_PATH").unwrap()));
+        let registry_path: String = env::var("DID_REGISTRY_PATH").unwrap();
+        crate::did::registry::init_registry(Some(registry_path));
         
         if let Err(err) = crate::did::registry::get_registry().store(document.clone()) {
             // Log error but continue - the document is still valid

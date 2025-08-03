@@ -7,7 +7,6 @@ pub mod dto;
 
 use std::collections::HashMap;
 use std::fs;
-use std::thread::current;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use did_library::did::core::did_document::*;

@@ -2,7 +2,6 @@
 use verifiable_credentials::presentation::*;
 use verifiable_credentials::format::*;
 use verifiable_credentials::*;
-use did_library::did::core::did_document::*;
 use did_library::did::core::key_utils::KeyType;
 use chrono::Utc;
 
