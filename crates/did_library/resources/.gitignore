@@ -1,5 +1,0 @@
-# This is for the sake of our backend docker application being able to compile everything
-
-# ignore everything except the .gitignore file
-*
-!.gitignore
