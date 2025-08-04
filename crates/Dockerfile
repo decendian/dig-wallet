@@ -1,4 +1,3 @@
-# Build stage
 FROM rust:slim AS builder
 
 RUN apt-get update && apt-get install -y \
@@ -16,6 +15,8 @@ WORKDIR /app
 # Copy full project
 COPY . .
 
+ENV DID_REGISTRY_PATH="did_library/resources/did_registry.json"
+RUN cargo test --release --workspace
 # Build from workspace root, specifying the binary
 RUN cargo build --release --bin api_server
 
@@ -23,9 +24,7 @@ RUN cargo build --release --bin api_server
 FROM debian:bookworm-slim
 
 COPY --from=builder /app/target/release/api_server /usr/local/bin/api_server
-COPY ./did_library/resources /did_library/resources
-
-ENV DID_REGISTRY_PATH="/did_library/resources/did_registry.json"
+COPY --from=builder /app/did_library/resources /did_library/resources
+ 
 EXPOSE 8080
-
 CMD ["api_server"]

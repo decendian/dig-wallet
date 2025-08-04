@@ -2,10 +2,8 @@ use crate::did::core::did_document::*;
 use crate::did::core::key_utils::*;
 use crate::did::core::traits::DIDMethod;
 use crate::DIDDocument;
-use ssi::jwk::JWK;
+use ssi_jwk::JWK;
 use std::env;
-
-
 // Additional imports for ethr DID method
 use ethereum_types::H160;
 use tiny_keccak::{Hasher, Keccak};
