@@ -11,8 +11,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # Within the compilation of the image, we run cargo test,
-    # if any of the tests fail, the process fails
+    # Within the compilation of the image, we run cargo test.
+    # If any of the tests fail the also process fails
     - name: docker compose build, test, deploy
       run: docker compose up -d --build
   
