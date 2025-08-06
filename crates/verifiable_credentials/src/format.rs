@@ -178,7 +178,6 @@ pub fn load_context_content(url: &str) -> Result<String, String> {
     }
 }
 
-
 /// Signs a Verifiable Credential using the issuer's key
 /// 
 /// This function adds a cryptographic proof to a credential by:
