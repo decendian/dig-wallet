@@ -8,5 +8,10 @@ pub mod dto;
 pub mod mapping;
 // /// Re-export main components for easier access
 pub use did::core::did_document::DIDDocument;
-// pub use did::methods::{ethr::EthrDID, key::KeyDID, web::WebDID};
-// pub use did::registry::Registry;
+
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}

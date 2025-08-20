@@ -6,8 +6,8 @@ use std::env;
 fn main() {
     // Print current working directory
     match env::current_dir() {
-        Ok(path) => println!("Current working directory: {:?} + <><>< ", path),
-        Err(e) => println!("Failed to get current directory: {}", e),
+        Ok(path) => println!("Current working directory: {:?}", path),
+        Err(e) => println!("Failed to get current directory: {}", e)
     }
 
     let options = DIDCreationOptions {
@@ -23,10 +23,6 @@ fn main() {
         chain_id: None,
     };
 
-    //TODO: Dynamically load and configure path for registry initialization (from .env file)
-    // did_library::did::registry::create_registry(Some(
-    //     "did_library/resources/did_registry.json".to_string(),
-    // ));
-
     let _document = KeyDID::create_did(options);
+    tauri_app_lib::run()
 }
