@@ -1,6 +1,6 @@
-use did_library::did::core::did_document::DIDCreationOptions;
-use did_library::did::core::traits::DIDMethod;
-use did_library::did::methods::key::handler::KeyDID;
+use did_lib_app::did::core::did_document::DIDCreationOptions;
+use did_lib_app::did::core::traits::DIDMethod;
+use did_lib_app::did::methods::key::handler::KeyDID;
 use std::env;
 
 fn main() {
@@ -24,5 +24,5 @@ fn main() {
     };
 
     let _document = KeyDID::create_did(options);
-    tauri_app_lib::run()
+    did_lib_app::run()
 }
